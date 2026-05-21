@@ -53,44 +53,38 @@ export default function AuthPage({ onAuth }) {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', background: 'var(--bg)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'var(--font-body)', padding: '1rem',
-    }}>
-      <div style={{ width: '100%', maxWidth: 420 }}>
+    <div className="auth-container">
+      <div className="auth-wrapper">
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 48, height: 48, background: 'var(--purple)', borderRadius: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-            <i className="ti ti-shield-lock" style={{ fontSize: 24, color: '#fff' }} />
+        <div className="auth-header">
+          <div className="auth-logo-icon">
+            <i className="ti ti-shield-lock" />
           </div>
-          <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px' }}>
-            CS<span style={{ color: 'var(--purple)' }}>Hub</span>
+          <div className="auth-title">
+            CS<span>Hub</span>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>Miva Open University · Cybersecurity</div>
+          <div className="auth-subtitle">Miva Open University · Cybersecurity</div>
         </div>
 
         {/* Card */}
-        <div className="card" style={{ padding: '2rem' }}>
+        <div className="card auth-card">
+          
           {/* Tab toggle */}
-          <div style={{ display: 'flex', background: '#F4F3EE', borderRadius: 9, padding: 3, marginBottom: 24 }}>
+          <div className="auth-tabs">
             {['login', 'signup'].map(m => (
-              <button key={m} onClick={() => { setMode(m); setError(''); setSuccess('') }} style={{
-                flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-                fontFamily: 'var(--font-head)', fontSize: 13, fontWeight: 600,
-                background: mode === m ? 'var(--card)' : 'transparent',
-                color: mode === m ? 'var(--text)' : 'var(--muted)',
-                boxShadow: mode === m ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                transition: 'all 0.15s',
-              }}>
+              <button 
+                key={m} 
+                onClick={() => { setMode(m); setError(''); setSuccess('') }} 
+                className={`auth-tab-btn ${mode === m ? 'active' : ''}`}
+              >
                 {m === 'login' ? 'Log in' : 'Sign up'}
               </button>
             ))}
           </div>
 
           {/* Fields */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="auth-fields">
             {mode === 'signup' && (
               <Field label="Full name" icon="ti-user" type="text" placeholder="Oluwapekarere Adeyinka"
                 value={form.fullName} onChange={v => update('fullName', v)} />
@@ -105,32 +99,26 @@ export default function AuthPage({ onAuth }) {
 
           {/* Error / success */}
           {error && (
-            <div style={{ marginTop: 14, padding: '10px 12px', background: '#FCEBEB', border: '1px solid #F5C2C2', borderRadius: 8, fontSize: 12, color: '#A32D2D', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <i className="ti ti-alert-circle" style={{ fontSize: 15, flexShrink: 0 }} /> {error}
+            <div className="auth-alert error">
+              <i className="ti ti-alert-circle" /> {error}
             </div>
           )}
           {success && (
-            <div style={{ marginTop: 14, padding: '10px 12px', background: '#E1F5EE', border: '1px solid #B4E4D5', borderRadius: 8, fontSize: 12, color: '#0F6E56', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <i className="ti ti-circle-check" style={{ fontSize: 15, flexShrink: 0 }} /> {success}
+            <div className="auth-alert success">
+              <i className="ti ti-circle-check" /> {success}
             </div>
           )}
 
           {/* Submit */}
-          <button onClick={handleSubmit} disabled={loading} style={{
-            width: '100%', marginTop: 20, padding: '12px', borderRadius: 10, border: 'none',
-            background: 'var(--purple)', color: '#fff', fontFamily: 'var(--font-head)',
-            fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}>
+          <button onClick={handleSubmit} disabled={loading} className="auth-submit-btn">
             {loading
-              ? <><i className="ti ti-loader-2" style={{ animation: 'spin 1s linear infinite' }} /> {mode === 'login' ? 'Logging in...' : 'Creating account...'}</>
+              ? <><i className="ti ti-loader-2 loading-spinner" /> {mode === 'login' ? 'Logging in...' : 'Creating account...'}</>
               : mode === 'login' ? 'Log in to CS Hub' : 'Create account'
             }
           </button>
 
           {/* Note */}
-          <div style={{ marginTop: 14, fontSize: 11, color: 'var(--hint)', textAlign: 'center', lineHeight: 1.6 }}>
+          <div className="auth-footer-note">
             {mode === 'login'
               ? 'Only @miva.edu.ng emails are accepted.'
               : 'Your account will be verified via your Miva email.'
@@ -140,7 +128,183 @@ export default function AuthPage({ onAuth }) {
       </div>
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* --- ANIMATIONS --- */
+        @keyframes spin { 
+          to { transform: rotate(360deg); } 
+        }
+
+        /* --- BASE LAYOUT --- */
+        .auth-container {
+          min-height: 100vh;
+          background: var(--bg);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: var(--font-body);
+          padding: 1rem;
+        }
+
+        .auth-wrapper {
+          width: 100%;
+          max-width: 420px;
+        }
+
+        /* --- HEADER --- */
+        .auth-header {
+          text-align: center;
+          margin-bottom: 32px;
+        }
+
+        .auth-logo-icon {
+          width: 48px;
+          height: 48px;
+          background: var(--purple);
+          border-radius: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+        }
+
+        .auth-logo-icon i {
+          font-size: 24px;
+          color: #fff;
+        }
+
+        .auth-title {
+          font-family: var(--font-head);
+          font-size: 22px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+        }
+        
+        .auth-title span {
+          color: var(--purple);
+        }
+
+        .auth-subtitle {
+          font-size: 12px;
+          color: var(--muted);
+          margin-top: 4px;
+        }
+
+        /* --- CARD & TABS --- */
+        .auth-card {
+          padding: 2rem;
+          background: var(--card-bg, #fff); /* Fallback if var(--card-bg) isn't set globally */
+          border-radius: 12px;
+        }
+
+        .auth-tabs {
+          display: flex;
+          background: #F4F3EE;
+          border-radius: 9px;
+          padding: 3px;
+          margin-bottom: 24px;
+        }
+
+        .auth-tab-btn {
+          flex: 1;
+          padding: 10px 0; /* Slightly larger touch target */
+          border-radius: 7px;
+          border: none;
+          cursor: pointer;
+          font-family: var(--font-head);
+          font-size: 13px;
+          font-weight: 600;
+          background: transparent;
+          color: var(--muted);
+          transition: all 0.15s;
+        }
+
+        .auth-tab-btn.active {
+          background: var(--card);
+          color: var(--text);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* --- FORM FIELDS --- */
+        .auth-fields {
+          display: flex;
+          flex-direction: column;
+          gap: 16px; /* Increased gap slightly for touch screens */
+        }
+
+        /* --- ALERTS --- */
+        .auth-alert {
+          margin-top: 16px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          font-size: 12px;
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+        
+        .auth-alert i {
+          font-size: 15px;
+          flex-shrink: 0;
+        }
+
+        .auth-alert.error {
+          background: #FCEBEB;
+          border: 1px solid #F5C2C2;
+          color: #A32D2D;
+        }
+
+        .auth-alert.success {
+          background: #E1F5EE;
+          border: 1px solid #B4E4D5;
+          color: #0F6E56;
+        }
+
+        /* --- BUTTON --- */
+        .auth-submit-btn {
+          width: 100%;
+          margin-top: 24px;
+          padding: 14px; /* Increased padding for better thumb tapping */
+          border-radius: 10px;
+          border: none;
+          background: var(--purple);
+          color: #fff;
+          font-family: var(--font-head);
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: opacity 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .auth-submit-btn:disabled {
+          cursor: not-allowed;
+          opacity: 0.7;
+        }
+
+        .loading-spinner {
+          animation: spin 1s linear infinite;
+        }
+
+        .auth-footer-note {
+          margin-top: 16px;
+          font-size: 11px;
+          color: var(--hint);
+          text-align: center;
+          line-height: 1.6;
+        }
+
+        /* --- MOBILE OVERRIDES --- */
+        @media (max-width: 480px) {
+          .auth-card {
+            padding: 1.5rem; /* Reduce padding on small screens to save space */
+          }
+          
+          .auth-header {
+            margin-bottom: 24px;
+          }
+        }
       `}</style>
     </div>
   )
@@ -148,24 +312,71 @@ export default function AuthPage({ onAuth }) {
 
 function Field({ label, icon, type, placeholder, value, onChange, onEnter }) {
   return (
-    <div>
-      <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', marginBottom: 5 }}>{label}</div>
-      <div style={{ position: 'relative' }}>
-        <i className={`ti ${icon}`} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: 'var(--hint)', pointerEvents: 'none' }} />
-        <input type={type} placeholder={placeholder} value={value}
+    <div className="field-container">
+      <div className="field-label">{label}</div>
+      <div className="field-input-wrapper">
+        <i className={`ti ${icon} field-icon`} />
+        <input 
+          type={type} 
+          placeholder={placeholder} 
+          value={value}
           onChange={e => onChange(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && onEnter?.()}
-          style={{
-            width: '100%', padding: '10px 12px 10px 34px',
-            border: '1px solid var(--border)', borderRadius: 9,
-            fontSize: 13, fontFamily: 'var(--font-body)',
-            background: 'var(--bg)', color: 'var(--text)', outline: 'none',
-            transition: 'border-color 0.15s',
-          }}
-          onFocus={e => e.target.style.borderColor = 'var(--purple)'}
-          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+          className="field-input"
         />
       </div>
+
+      <style>{`
+        .field-container {
+          width: 100%;
+        }
+
+        .field-label {
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--muted);
+          margin-bottom: 6px;
+        }
+
+        .field-input-wrapper {
+          position: relative;
+        }
+
+        .field-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 16px;
+          color: var(--hint);
+          pointer-events: none;
+        }
+
+        .field-input {
+          width: 100%;
+          padding: 12px 12px 12px 36px; /* 12px vertical padding gives ~44px height */
+          border: 1px solid var(--border);
+          border-radius: 9px;
+          font-size: 13px;
+          font-family: var(--font-body);
+          background: var(--bg);
+          color: var(--text);
+          outline: none;
+          transition: border-color 0.15s;
+          box-sizing: border-box; /* Ensure padding doesn't break width */
+        }
+
+        .field-input:focus {
+          border-color: var(--purple);
+        }
+
+        /* Prevent auto-zoom on iOS Safari when tapping inputs */
+        @media (max-width: 480px) {
+          .field-input {
+            font-size: 16px; 
+          }
+        }
+      `}</style>
     </div>
   )
 }

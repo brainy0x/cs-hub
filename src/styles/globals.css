@@ -207,7 +207,7 @@ a { color: inherit; text-decoration: none; }
   select,
   textarea {
     font-size: 16px; /* Prevent auto-zoom on iOS */
-    padding: 12px !important;
+    /*padding: 12px !important;*/
     min-height: 44px;
   }
   
