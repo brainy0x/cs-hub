@@ -33,7 +33,7 @@ export const ANNOUNCEMENTS = [
     id: 4,
     type: 'result',
     text: 'GST 112 CA scores now available — check your student portal',
-    link: 'https://portal.miva.university',
+    link: 'https://sis.miva.university',
     linkLabel: 'Check portal',
     urgent: false,
   },
