@@ -68,9 +68,6 @@ export default function Sidebar({ active, onNav, onSignOut, user, isAdmin }) {
 
         <div style={{ flex: 1 }} />
 
-        <button style={s.item} onClick={() => onNav('settings')}>
-          <i className="ti ti-settings" style={{ fontSize: 16 }} /> Settings
-        </button>
         <button style={{ ...s.item, color: '#A32D2D' }} onClick={onSignOut}>
           <i className="ti ti-logout" style={{ fontSize: 16 }} /> Sign out
         </button>

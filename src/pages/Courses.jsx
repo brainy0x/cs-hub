@@ -1,15 +1,17 @@
 import React from 'react'
-import { COURSES } from '../lib/data'
+import { useLiveCourses } from '../lib/liveData'
 
 export default function Courses() {
+  const { courses } = useLiveCourses()
+
   return (
     <div className="fade-up">
       <div className="page-header">
         <div className="page-title">Courses</div>
         <div className="page-sub">Semester 2 · 100 Level · 14 credit units total</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
-        {COURSES.map(c => (
+      <div className="course-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
+        {courses.map(c => (
           <div key={c.code} className="card" style={{ transition: 'border-color 0.15s', cursor: 'default' }}
             onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--purple-mid)'}
             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>

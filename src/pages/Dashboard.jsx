@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { COURSES, SUMMARIES, LEADERBOARD } from '../lib/data'
-import { getCalendar } from '../lib/supabase'
+import { SUMMARIES } from '../lib/data'
+import { useLiveAnnouncements, useLiveCalendar, useLiveCourses, useLiveLeaderboard } from '../lib/liveData'
 import AnnouncementBanner from '../components/AnnouncementBanner'
 
 // ─── LIVE COUNTDOWN COMPONENT ────────────────────────────────────────────────
@@ -40,18 +40,10 @@ function ExamCountdownBadge({ examDate }) {
 }
 
 export default function Dashboard({ onNav }) {
-  const [calendar, setCalendar] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadCalendar()
-  }, [])
-
-  async function loadCalendar() {
-    const { data } = await getCalendar()
-    setCalendar(data)
-    setLoading(false)
-  }
+  const { calendar, loading } = useLiveCalendar()
+  const { courses } = useLiveCourses()
+  const { announcements } = useLiveAnnouncements()
+  const { leaderboard } = useLiveLeaderboard()
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>Loading...</div>
 
@@ -68,17 +60,17 @@ export default function Dashboard({ onNav }) {
       </div>
 
       {/* ── ANNOUNCEMENT BANNER ── */}
-      <AnnouncementBanner />
+      <AnnouncementBanner items={announcements} />
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
+      <div className="dashboard-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
         <StatCard icon="ti-calendar-week" color="var(--purple)" label="Academic week" value={`Week ${currentWeek}`} hint={`of ${totalWeeks}`} />
         <StatCard icon="ti-alarm" color="var(--amber)" label="Exam countdown" value={examDate ? <ExamCountdownBadge examDate={examDate} /> : 'N/A'} hint={`First paper: ${firstExam || 'TBA'}`} />
         <StatCard icon="ti-flame" color="var(--teal)" label="Quiz streak" value="5 🔥" hint="weeks in a row" />
       </div>
 
       {/* Week timeline */}
-      <div className="card" style={{ marginBottom: 16, display: 'none' }} className="week-timeline">
+      <div className="card week-timeline" style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, marginBottom: 10 }}>
           Semester {calendar?.semester ?? 2} progress — Week {currentWeek} of {totalWeeks}
         </div>
@@ -91,6 +83,7 @@ export default function Dashboard({ onNav }) {
                 flex: 1, textAlign: 'center', padding: '6px 2px',
                 borderRadius: 6, border: `1px solid ${isCurrent ? 'var(--purple-mid)' : 'var(--border)'}`,
                 background: isCurrent ? 'var(--purple-light)' : isPast ? '#F4F3EE' : 'transparent',
+                boxShadow: isCurrent ? '0 0 0 2px rgba(83,74,183,0.10), 0 0 18px rgba(83,74,183,0.28)' : 'none',
               }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: isCurrent ? 'var(--purple)' : isPast ? 'var(--teal)' : 'var(--hint)' }}>W{w}</div>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', margin: '3px auto 0', background: isCurrent ? 'var(--purple)' : isPast ? 'var(--teal)' : 'var(--border)' }} />
@@ -101,13 +94,13 @@ export default function Dashboard({ onNav }) {
       </div>
 
       {/* Two column */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+      <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         <div className="card">
           <div className="sec-head">
             <div className="sec-title"><i className="ti ti-books" /> Courses</div>
             <span style={{ fontSize: 12, color: 'var(--purple)', cursor: 'pointer' }} onClick={() => onNav('courses')}>See all</span>
           </div>
-          {COURSES.map(c => (
+          {courses.map(c => (
             <div key={c.code} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
@@ -118,17 +111,22 @@ export default function Dashboard({ onNav }) {
             </div>
           ))}
         </div>
-        <div className="card">
+        <div className="card dashboard-leaderboard">
           <div className="sec-head">
             <div className="sec-title"><i className="ti ti-trophy" /> This week's leaderboard</div>
             <span style={{ fontSize: 12, color: 'var(--purple)', cursor: 'pointer' }} onClick={() => onNav('leaderboard')}>Full board</span>
           </div>
-          {LEADERBOARD.slice(0, 5).map((s, i) => (
-            <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < 4 ? '1px solid var(--border)' : 'none' }}>
+          {leaderboard.length === 0 && (
+            <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+              No quiz scores yet. Once students submit quizzes, rankings will appear here.
+            </div>
+          )}
+          {leaderboard.slice(0, 5).map((s, i) => (
+            <div key={s.user_id || s.full_name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < Math.min(leaderboard.length, 5) - 1 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ fontSize: 12, fontWeight: 700, width: 18, textAlign: 'center', color: i === 0 ? 'var(--amber)' : 'var(--hint)' }}>{i + 1}</div>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: s.color, color: s.textColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600 }}>{s.initials}</div>
-              <div style={{ flex: 1, fontSize: 12, fontWeight: 500 }}>{s.name} {s.isMe && <span style={{ fontSize: 10, color: 'var(--muted)' }}>(you)</span>}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)' }}>{s.score}%</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--purple-light)', color: 'var(--purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600 }}>{(s.full_name || 'Student').slice(0, 2).toUpperCase()}</div>
+              <div style={{ flex: 1, fontSize: 12, fontWeight: 500 }}>{s.full_name || 'Student'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)' }}>{s.avg_score ?? 0}%</div>
             </div>
           ))}
         </div>
@@ -140,7 +138,7 @@ export default function Dashboard({ onNav }) {
           <div className="sec-title"><i className="ti ti-file-description" /> Week {currentWeek} summaries</div>
           <span style={{ fontSize: 12, color: 'var(--purple)', cursor: 'pointer' }} onClick={() => onNav('summaries')}>All summaries</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="summary-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {Object.entries(SUMMARIES).map(([code, s]) => (
             <div key={code} style={{ padding: '12px', border: '1px solid var(--border)', borderRadius: 10 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: s.color, marginBottom: 5 }}>{code} · Week {s.week}</div>

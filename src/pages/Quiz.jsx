@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { QUIZ_DATA, COURSES } from '../lib/data'
+import { QUIZ_DATA } from '../lib/data'
+import { useLiveCourses } from '../lib/liveData'
 
 const LETTERS = ['A', 'B', 'C', 'D']
 
 export default function Quiz({ onNav }) {
+  const { courses } = useLiveCourses()
   const [selected, setSelected] = useState(null)
   const [phase, setPhase] = useState('select') // select | active | result
   const [qIndex, setQIndex] = useState(0)
@@ -68,7 +70,7 @@ export default function Quiz({ onNav }) {
         {phase === 'select' && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 20 }}>
-              {COURSES.filter(c => QUIZ_DATA[c.code]).map(c => (
+              {courses.filter(c => QUIZ_DATA[c.code]).map(c => (
                 <button key={c.code} onClick={() => setSelected(c.code)}
                   style={{ background: selected === c.code ? c.light : 'var(--card)', border: `1px solid ${selected === c.code ? c.color : 'var(--border)'}`, borderRadius: 10, padding: '1rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-head)', color: c.color }}>{c.code}</div>

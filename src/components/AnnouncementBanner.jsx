@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
 
 // ─── ANNOUNCEMENT DATA ────────────────────────────────────────────────────────
+// TODO: Replace this with a Supabase fetch from the `announcements` table
+// Each item: { id, type, text, link, linkLabel, urgent }
+// type: 'lesson' | 'ticket' | 'result' | 'task' | 'info'
 export const ANNOUNCEMENTS = [
   {
     id: 1,
@@ -30,7 +33,7 @@ export const ANNOUNCEMENTS = [
     id: 4,
     type: 'result',
     text: 'GST 112 CA scores now available — check your student portal',
-    link: 'https://sis.miva.university',
+    link: 'https://portal.miva.university',
     linkLabel: 'Check portal',
     urgent: false,
   },
@@ -55,31 +58,39 @@ const TYPE_CONFIG = {
 
 // ─── MARQUEE STRIP ────────────────────────────────────────────────────────────
 function MarqueeStrip({ items }) {
+  // Duplicate items so the loop feels seamless
   const all = [...items, ...items]
   return (
-    <div className="marquee-container-inner">
-      <div className="marquee-fade-left" />
-      <div className="marquee-fade-right" />
-      <div className="marquee-track">
+    <div style={{ overflow: 'hidden', position: 'relative' }}>
+      {/* Fade edges */}
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, #1a1a18, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 40, background: 'linear-gradient(to left, #1a1a18, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+      <div style={{ display: 'flex', gap: 0, animation: 'marquee 35s linear infinite', whiteSpace: 'nowrap' }}>
         {all.map((item, idx) => {
           const cfg = TYPE_CONFIG[item.type]
           return (
-            <span key={`${item.id}-${idx}`} className="marquee-item">
-              <span className="marquee-badge" style={{ background: cfg.bg, color: cfg.color }}>
+            <span key={`${item.id}-${idx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 2rem' }}>
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: cfg.bg, color: cfg.color, fontWeight: 700, letterSpacing: '0.06em' }}>
                 {cfg.label}
               </span>
-              <span className="marquee-text">{item.text}</span>
+              <span style={{ fontSize: 12, color: '#e8e6df' }}>{item.text}</span>
               {item.link && (
-                <a href={item.link} target="_blank" rel="noreferrer" className="marquee-link"
-                  style={{ color: cfg.color, background: cfg.bg }}>
-                  {item.linkLabel} →
+                <a href={item.link} target="_blank" rel="noreferrer"
+                  style={{ fontSize: 11, color: cfg.color, fontWeight: 600, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textDecoration: 'none' }}>
+                  {item.link_label || item.linkLabel || 'Open'} →
                 </a>
               )}
-              <span className="marquee-divider">◆</span>
+              <span style={{ color: '#444', marginLeft: 8 }}>◆</span>
             </span>
           )
         })}
       </div>
+      <style>{`
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+      `}</style>
     </div>
   )
 }
@@ -87,35 +98,31 @@ function MarqueeStrip({ items }) {
 // ─── EXPANDED PANEL ───────────────────────────────────────────────────────────
 function ExpandedPanel({ items, onClose }) {
   return (
-    <div className="expanded-panel">
+    <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #2a2a28', display: 'flex', flexDirection: 'column', gap: 8 }}>
       {items.map(item => {
         const cfg = TYPE_CONFIG[item.type]
         return (
-          <div key={item.id} className="expanded-item">
-            <div className="expanded-icon" style={{ background: cfg.bg }}>
-              <i className={`ti ${cfg.icon}`} style={{ color: cfg.color }} />
+          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: '#242422' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <i className={`ti ${cfg.icon}`} style={{ fontSize: 14, color: cfg.color }} />
             </div>
-            
-            <div className="expanded-content">
-              <div className="expanded-meta">
-                <span className="expanded-badge" style={{ background: cfg.bg, color: cfg.color }}>
-                  {cfg.label}
-                </span>
-                {item.urgent && <span className="urgent-text">● URGENT</span>}
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 999, background: cfg.bg, color: cfg.color, fontWeight: 700 }}>{cfg.label}</span>
+                {item.urgent && <span style={{ fontSize: 10, color: '#A32D2D', fontWeight: 600 }}>● URGENT</span>}
               </div>
-              <div className="expanded-text">{item.text}</div>
+              <div style={{ fontSize: 12, color: '#c8c6c0' }}>{item.text}</div>
             </div>
-
             {item.link && (
-              <a href={item.link} target="_blank" rel="noreferrer" className="expanded-action"
-                style={{ color: cfg.color, background: cfg.bg }}>
-                {item.linkLabel} →
+              <a href={item.link} target="_blank" rel="noreferrer"
+                style={{ fontSize: 11, color: cfg.color, fontWeight: 600, background: cfg.bg, padding: '4px 10px', borderRadius: 7, textDecoration: 'none', flexShrink: 0 }}>
+                {item.link_label || item.linkLabel || 'Open'} →
               </a>
             )}
           </div>
         )
       })}
-      <button onClick={onClose} className="collapse-btn">
+      <button onClick={onClose} style={{ alignSelf: 'flex-end', fontSize: 11, color: '#6b6a65', background: 'transparent', border: 'none', cursor: 'pointer', marginTop: 2 }}>
         Collapse ↑
       </button>
     </div>
@@ -127,29 +134,41 @@ export default function AnnouncementBanner({ items = ANNOUNCEMENTS }) {
   const [expanded, setExpanded] = useState(false)
   const urgentCount = items.filter(i => i.urgent).length
 
+  if (!items.length) return null
+
   return (
-    <div className="announcement-banner">
+    <div className="announcement-banner" style={{
+      background: '#1a1a18',
+      border: '1px solid #2a2a28',
+      borderRadius: 10,
+      marginBottom: 16,
+      overflow: 'hidden',
+    }}>
       {/* Top bar */}
-      <div className="banner-top">
+      <div className="announcement-banner__bar" style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
         {/* Label pill */}
-        <div className="label-pill">
-          <div className="pulsing-dot" />
-          <span className="label-text">ANNOUNCEMENTS</span>
+        <div className="announcement-banner__label" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 12px', borderRight: '1px solid #2a2a28', flexShrink: 0 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#A32D2D', boxShadow: '0 0 6px #A32D2D', animation: 'pulse 2s infinite' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#e8e6df', letterSpacing: '0.08em', fontFamily: 'var(--font-head)' }}>ANNOUNCEMENTS</span>
           {urgentCount > 0 && (
-            <span className="urgent-badge">
+            <span style={{ fontSize: 10, background: '#A32D2D', color: '#fff', padding: '1px 6px', borderRadius: 999, fontWeight: 700 }}>
               {urgentCount} urgent
             </span>
           )}
         </div>
 
         {/* Marquee */}
-        <div className="marquee-wrapper">
+        <div className="announcement-banner__marquee" style={{ flex: 1, padding: '8px 0', minWidth: 0 }}>
           <MarqueeStrip items={items} />
         </div>
 
         {/* Expand toggle */}
-        <button className="expand-toggle" onClick={() => setExpanded(e => !e)}>
-          <i className={`ti ${expanded ? 'ti-chevron-up' : 'ti-chevron-down'}`} />
+        <button onClick={() => setExpanded(e => !e)} style={{
+          padding: '8px 12px', background: 'transparent',
+          border: 'none', borderLeft: '1px solid #2a2a28', color: '#6b6a65', cursor: 'pointer',
+          fontSize: 12, display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+        }}>
+          <i className={`ti ${expanded ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ fontSize: 14 }} />
         </button>
       </div>
 
@@ -157,266 +176,9 @@ export default function AnnouncementBanner({ items = ANNOUNCEMENTS }) {
       {expanded && <ExpandedPanel items={items} onClose={() => setExpanded(false)} />}
 
       <style>{`
-        /* --- ANIMATIONS --- */
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
-        }
-        @keyframes marquee {
-          from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
-        }
-
-        /* --- BASE LAYOUT --- */
-        .announcement-banner {
-          background: #1a1a18;
-          border: 1px solid #2a2a28;
-          border-radius: 10px;
-          margin-bottom: 16px;
-          overflow: hidden;
-          width: 100%;
-        }
-
-        .banner-top {
-          display: flex;
-          align-items: stretch;
-          min-height: 44px; /* Better touch target height */
-        }
-
-        .label-pill {
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          padding: 8px 12px;
-          border-right: 1px solid #2a2a28;
-          flex-shrink: 0;
-        }
-
-        .pulsing-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #A32D2D;
-          box-shadow: 0 0 6px #A32D2D;
-          animation: pulse 2s infinite;
-          flex-shrink: 0;
-        }
-
-        .label-text {
-          font-size: 11px;
-          font-weight: 700;
-          color: #e8e6df;
-          letter-spacing: 0.08em;
-          font-family: var(--font-head, sans-serif);
-        }
-
-        .urgent-badge {
-          font-size: 10px;
-          background: #A32D2D;
-          color: #fff;
-          padding: 2px 6px;
-          border-radius: 999px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        /* --- MARQUEE --- */
-        .marquee-wrapper {
-          flex: 1;
-          min-width: 0; /* CRITICAL: Prevents flex children from stretching parent on mobile */
-          display: flex;
-          align-items: center;
-        }
-
-        .marquee-container-inner {
-          width: 100%;
-          overflow: hidden;
-          position: relative;
-        }
-
-        .marquee-fade-left {
-          position: absolute; left: 0; top: 0; bottom: 0; width: 40px;
-          background: linear-gradient(to right, #1a1a18, transparent);
-          z-index: 2; pointer-events: none;
-        }
-
-        .marquee-fade-right {
-          position: absolute; right: 0; top: 0; bottom: 0; width: 40px;
-          background: linear-gradient(to left, #1a1a18, transparent);
-          z-index: 2; pointer-events: none;
-        }
-
-        .marquee-track {
-          display: flex;
-          gap: 0;
-          animation: marquee 25s linear infinite;
-          white-space: nowrap;
-          width: max-content;
-        }
-
-        .marquee-item {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 0 2rem;
-        }
-
-        .marquee-badge {
-          font-size: 10px;
-          padding: 2px 7px;
-          border-radius: 999px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-        }
-
-        .marquee-text {
-          font-size: 12px;
-          color: #e8e6df;
-        }
-
-        .marquee-link {
-          font-size: 11px;
-          font-weight: 600;
-          padding: 2px 8px;
-          border-radius: 999px;
-          text-decoration: none;
-        }
-
-        .marquee-divider {
-          color: #444;
-          margin-left: 8px;
-        }
-
-        /* --- CONTROLS --- */
-        .expand-toggle {
-          padding: 10px 14px;
-          background: transparent;
-          border: none;
-          border-left: 1px solid #2a2a28;
-          color: #6b6a65;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          font-size: 14px;
-        }
-
-        .expand-toggle:hover {
-          background: #242422;
-          color: #e8e6df;
-        }
-
-        /* --- EXPANDED PANEL --- */
-        .expanded-panel {
-          padding: 0.75rem 1rem;
-          border-top: 1px solid #2a2a28;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .expanded-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px;
-          border-radius: 8px;
-          background: #242422;
-        }
-
-        .expanded-icon {
-          width: 28px;
-          height: 28px;
-          border-radius: 7px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          font-size: 14px;
-        }
-
-        .expanded-content {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .expanded-meta {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          margin-bottom: 4px;
-          flex-wrap: wrap;
-        }
-
-        .expanded-badge {
-          font-size: 10px;
-          padding: 1px 6px;
-          border-radius: 999px;
-          font-weight: 700;
-        }
-
-        .urgent-text {
-          font-size: 10px;
-          color: #A32D2D;
-          font-weight: 600;
-        }
-
-        .expanded-text {
-          font-size: 12px;
-          color: #c8c6c0;
-          line-height: 1.4;
-        }
-
-        .expanded-action {
-          font-size: 11px;
-          font-weight: 600;
-          padding: 6px 12px;
-          border-radius: 7px;
-          text-decoration: none;
-          flex-shrink: 0;
-          white-space: nowrap;
-        }
-
-        .collapse-btn {
-          align-self: flex-end;
-          font-size: 11px;
-          color: #6b6a65;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          margin-top: 4px;
-          padding: 4px 8px;
-        }
-
-        /* --- MOBILE OVERRIDES --- */
-        @media (max-width: 640px) {
-          .label-text {
-            display: none; /* Hide 'ANNOUNCEMENTS' text to give marquee space */
-          }
-          
-          .label-pill {
-            padding: 8px 10px;
-          }
-
-          .marquee-item {
-            padding: 0 1.25rem;
-          }
-
-          /* Allow the action button to wrap below the text on very narrow screens */
-          .expanded-item {
-            align-items: flex-start;
-            flex-wrap: wrap;
-          }
-
-          .expanded-content {
-            flex: 1 1 calc(100% - 40px); /* 100% width minus icon width and gap */
-          }
-
-          .expanded-action {
-            margin-left: 38px; /* Indent to match the text alignment */
-            margin-top: 4px;
-          }
         }
       `}</style>
     </div>

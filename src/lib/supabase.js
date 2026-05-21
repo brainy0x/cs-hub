@@ -38,12 +38,11 @@ export const submitScore = async (userId, course, week, score) => {
   return { data, error }
 }
 
-export const getLeaderboard = async (week) => {
+export const getLeaderboard = async () => {
   const { data, error } = await supabase
     .from('leaderboard')
     .select('*')
-    .eq('week_number', week)
-    .order('score', { ascending: false })
+    .order('avg_score', { ascending: false, nullsFirst: false })
   return { data, error }
 }
 
@@ -52,6 +51,7 @@ export const getCourses = async () => {
   const { data, error } = await supabase
     .from('courses')
     .select('*')
+    .eq('active', true)
     .order('code', { ascending: true })
   return { data, error }
 }
@@ -86,6 +86,7 @@ export const getAnnouncements = async () => {
   const { data, error } = await supabase
     .from('announcements')
     .select('*')
+    .eq('active', true)
     .order('created_at', { ascending: false })
   return { data, error }
 }

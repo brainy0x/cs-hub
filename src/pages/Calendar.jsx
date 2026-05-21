@@ -1,22 +1,28 @@
 import React from 'react'
-import { ACADEMIC } from '../lib/data'
+import { useLiveCalendar } from '../lib/liveData'
 
-const EVENTS = [
-  { week: 'Now', sub: `Week ${ACADEMIC.currentWeek}`, color: 'var(--teal)', title: 'Lecture period continues', desc: 'Weeks 9–12 — core content delivery, weekly quizzes active' },
-  { week: 'W13', sub: '~3 wks', color: 'var(--blue)', title: 'Revision week begins', desc: 'No new content. Quiz vault opens with past questions.' },
-  { week: 'W14', sub: '~5 wks', color: 'var(--amber)', title: 'Exam period starts', desc: 'MTH 102 → CSC 106 → PHY 102 → COS 102 → GST 112 → PHY 108' },
-  { week: 'W15', sub: 'End', color: 'var(--purple)', title: 'Semester closes', desc: 'Results released 4–6 weeks after final paper. SIWES placement begins.' },
-]
+function getEvents(calendar) {
+  const currentWeek = calendar?.current_week ?? 1
+  return [
+    { week: 'Now', sub: `Week ${currentWeek}`, color: 'var(--teal)', title: 'Lecture period continues', desc: `Week ${currentWeek} content delivery and weekly quizzes active` },
+    { week: 'W13', sub: '~3 wks', color: 'var(--blue)', title: 'Revision week begins', desc: 'No new content. Quiz vault opens with past questions.' },
+    { week: 'W14', sub: '~5 wks', color: 'var(--amber)', title: 'Exam period starts', desc: 'MTH 102 -> CSC 106 -> PHY 102 -> COS 102 -> GST 112 -> PHY 108' },
+    { week: 'W15', sub: 'End', color: 'var(--purple)', title: 'Semester closes', desc: 'Results released 4-6 weeks after final paper. SIWES placement begins.' },
+  ]
+}
 
 export default function Calendar() {
+  const { calendar } = useLiveCalendar()
+  const events = getEvents(calendar)
+
   return (
     <div className="fade-up">
       <div className="page-header">
         <div className="page-title">Academic calendar</div>
-        <div className="page-sub">Semester 2 · 2023/2024 session</div>
+        <div className="page-sub">Semester {calendar?.semester ?? 2} · {calendar?.session ?? '2023/2024'} session</div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {EVENTS.map(e => (
+        {events.map(e => (
           <div key={e.week} className="card" style={{ display: 'flex', alignItems: 'center', gap: 20, borderLeft: `3px solid ${e.color}` }}>
             <div style={{ textAlign: 'center', minWidth: 52 }}>
               <div style={{ fontFamily: 'var(--font-head)', fontSize: e.week === 'Now' ? 18 : 20, fontWeight: 700, color: e.color }}>{e.week}</div>

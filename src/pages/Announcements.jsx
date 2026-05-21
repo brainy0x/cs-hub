@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ANNOUNCEMENTS } from '../components/AnnouncementBanner'
+import { useLiveAnnouncements } from '../lib/liveData'
 
 const TYPE_CONFIG = {
   lesson: { icon: 'ti-video',        color: '#0F6E56', bg: '#E1F5EE', label: 'LIVE'    },
@@ -14,12 +14,13 @@ const FILTERS = ['all', 'lesson', 'task', 'ticket', 'result', 'info']
 export default function Announcements() {
   const [filter, setFilter] = useState('all')
   const [dismissed, setDismissed] = useState([])
+  const { announcements } = useLiveAnnouncements()
 
-  const visible = ANNOUNCEMENTS.filter(a =>
+  const visible = announcements.filter(a =>
     !dismissed.includes(a.id) && (filter === 'all' || a.type === filter)
   )
 
-  const urgentCount = ANNOUNCEMENTS.filter(a => a.urgent && !dismissed.includes(a.id)).length
+  const urgentCount = announcements.filter(a => a.urgent && !dismissed.includes(a.id)).length
 
   return (
     <div className="fade-up">
@@ -36,7 +37,7 @@ export default function Announcements() {
       </div>
 
       {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div className="filter-row" style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
         {FILTERS.map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500,
@@ -125,7 +126,7 @@ function AnnouncementCard({ item, onDismiss }) {
             fontSize: 12, fontWeight: 600, color: cfg.color, background: cfg.bg,
             padding: '5px 12px', borderRadius: 7, textDecoration: 'none',
           }}>
-            {item.linkLabel} <i className="ti ti-arrow-up-right" style={{ fontSize: 12 }} />
+            {item.link_label || item.linkLabel || 'Open'} <i className="ti ti-arrow-up-right" style={{ fontSize: 12 }} />
           </a>
         )}
       </div>

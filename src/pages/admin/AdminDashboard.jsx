@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { supabase, getCourses, addCourse, updateCourse, deleteCourse, getAnnouncements, addAnnouncement, deleteAnnouncement, getCalendar, updateCalendar, getUsers, updateUserRole } from '../../lib/supabase'
+import { getCourses, addCourse, updateCourse, deleteCourse, getAnnouncements, addAnnouncement, updateAnnouncement, deleteAnnouncement, getCalendar, updateCalendar, getUsers, updateUserRole } from '../../lib/supabase'
 
 // ─── COUNTDOWN COMPONENT ─────────────────────────────────────────────────────
 function ExamCountdown({ examDate }) {
@@ -96,6 +96,30 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleEditCourse() {
+    if (!formData.id || !formData.code || !formData.title) {
+      setError('Code and title required')
+      return
+    }
+    const { error: err } = await updateCourse(formData.id, {
+      code: formData.code,
+      title: formData.title,
+      units: formData.units || 3,
+      color: formData.color || '#534AB7',
+      light: formData.light || '#EEEDFE',
+      icon: formData.icon || 'ti-book',
+      topics: Array.isArray(formData.topics) ? formData.topics : formData.topics?.split(',').map(t => t.trim()).filter(Boolean) || [],
+      progress: formData.progress || 0,
+    })
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
   async function handleDeleteCourse(id) {
     if (confirm('Delete this course?')) {
       await deleteCourse(id)
@@ -116,6 +140,28 @@ export default function AdminDashboard() {
       link_label: formData.link_label || null,
       urgent: formData.urgent || false,
       active: true,
+    })
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
+  async function handleEditAnnouncement() {
+    if (!formData.id || !formData.text) {
+      setError('Text required')
+      return
+    }
+    const { error: err } = await updateAnnouncement(formData.id, {
+      type: formData.type || 'info',
+      text: formData.text,
+      link: formData.link || null,
+      link_label: formData.link_label || null,
+      urgent: Boolean(formData.urgent),
+      active: formData.active !== false,
     })
     if (err) {
       setError(err.message)
@@ -171,7 +217,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+      <div className="admin-tabs" style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
         {['courses', 'announcements', 'calendar', 'users'].map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 16px', borderRadius: 8, border: 'none', background: tab === t ? 'var(--purple)' : 'transparent',
@@ -195,12 +241,18 @@ export default function AdminDashboard() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
             {courses.map((c) => (
               <div key={c.id} className="card" style={{ padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 8 }}>
                   <div style={{ fontWeight: 600, color: 'var(--text)' }}>{c.code}</div>
-                  <button onClick={() => handleDeleteCourse(c.id)} style={{
-                    background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 12px',
-                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
-                  }}>Delete</button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => { setModal('editCourse'); setFormData({ ...c, topics: c.topics?.join(', ') || '' }); setError('') }} style={{
+                      background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', borderRadius: 6, padding: '6px 10px',
+                      cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                    }}>Edit</button>
+                    <button onClick={() => handleDeleteCourse(c.id)} style={{
+                      background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 10px',
+                      cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                    }}>Delete</button>
+                  </div>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>{c.title}</div>
                 <div style={{ fontSize: 11, color: 'var(--hint)' }}>{c.units} units</div>
@@ -221,15 +273,21 @@ export default function AdminDashboard() {
           </button>
           <div style={{ display: 'grid', gap: 12 }}>
             {announcements.map((a) => (
-              <div key={a.id} className="card" style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+              <div key={a.id} className="card admin-list-row" style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{a.text}</div>
                   <div style={{ fontSize: 11, color: 'var(--muted)' }}>Type: {a.type} {a.urgent ? '· Urgent' : ''}</div>
                 </div>
-                <button onClick={() => handleDeleteAnnouncement(a.id)} style={{
-                  background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 12px',
-                  cursor: 'pointer', fontSize: 12, fontWeight: 500, marginLeft: 8,
-                }}>Delete</button>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => { setModal('editAnnouncement'); setFormData(a); setError('') }} style={{
+                    background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Edit</button>
+                  <button onClick={() => handleDeleteAnnouncement(a.id)} style={{
+                    background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Delete</button>
+                </div>
               </div>
             ))}
           </div>
@@ -286,26 +344,28 @@ export default function AdminDashboard() {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
         }}>
-          <div className="card" style={{ maxWidth: 500, width: '90%', padding: 24 }}>
+          <div className="card admin-modal" style={{ maxWidth: 500, width: '90%', padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             {error && <div style={{ padding: 10, background: '#FCEBEB', color: '#A32D2D', borderRadius: 6, marginBottom: 14, fontSize: 12 }}>{error}</div>}
 
-            {modal === 'addCourse' && (
+            {(modal === 'addCourse' || modal === 'editCourse') && (
               <>
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Add Course</div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{modal === 'editCourse' ? 'Edit Course' : 'Add Course'}</div>
                 <Input label="Code" placeholder="CSC 106" value={formData.code} onChange={(v) => setFormData({ ...formData, code: v })} />
                 <Input label="Title" placeholder="Introduction to Programming" value={formData.title} onChange={(v) => setFormData({ ...formData, title: v })} />
                 <Input label="Units" type="number" value={formData.units} onChange={(v) => setFormData({ ...formData, units: parseInt(v) })} />
+                <Input label="Progress" type="number" value={formData.progress} onChange={(v) => setFormData({ ...formData, progress: parseInt(v) })} />
                 <Input label="Icon" placeholder="ti-code" value={formData.icon} onChange={(v) => setFormData({ ...formData, icon: v })} />
+                <Input label="Topics" placeholder="Functions, Arrays, Pointers" value={formData.topics} onChange={(v) => setFormData({ ...formData, topics: v })} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
                   <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
-                  <button onClick={handleAddCourse} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>Add</button>
+                  <button onClick={modal === 'editCourse' ? handleEditCourse : handleAddCourse} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>{modal === 'editCourse' ? 'Save' : 'Add'}</button>
                 </div>
               </>
             )}
 
-            {modal === 'addAnnouncement' && (
+            {(modal === 'addAnnouncement' || modal === 'editAnnouncement') && (
               <>
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>New Announcement</div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{modal === 'editAnnouncement' ? 'Edit Announcement' : 'New Announcement'}</div>
                 <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid var(--border)', marginBottom: 12, background: 'var(--card)', color: 'var(--text)' }}>
                   <option value="lesson">Lesson</option>
                   <option value="ticket">Ticket</option>
@@ -322,7 +382,7 @@ export default function AdminDashboard() {
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
-                  <button onClick={handleAddAnnouncement} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>Post</button>
+                  <button onClick={modal === 'editAnnouncement' ? handleEditAnnouncement : handleAddAnnouncement} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>{modal === 'editAnnouncement' ? 'Save' : 'Post'}</button>
                 </div>
               </>
             )}
@@ -351,7 +411,7 @@ function Input({ label, type = 'text', placeholder, value, onChange }) {
   return (
     <div style={{ marginBottom: 12 }}>
       <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted)', marginBottom: 4 }}>{label}</div>
-      <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} style={{
+      <input type={type} placeholder={placeholder} value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{
         width: '100%', padding: '10px', borderRadius: 6, border: '1px solid var(--border)',
         background: 'var(--bg)', color: 'var(--text)', fontSize: 13, outline: 'none',
         boxSizing: 'border-box',
