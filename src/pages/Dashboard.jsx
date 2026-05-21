@@ -78,7 +78,7 @@ export default function Dashboard({ onNav }) {
       </div>
 
       {/* Week timeline */}
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card" style={{ marginBottom: 16, display: 'none' }} className="week-timeline">
         <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, marginBottom: 10 }}>
           Semester {calendar?.semester ?? 2} progress — Week {currentWeek} of {totalWeeks}
         </div>
