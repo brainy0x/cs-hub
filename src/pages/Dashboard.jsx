@@ -50,7 +50,7 @@ export default function Dashboard({ onNav }) {
   const currentWeek = calendar?.current_week ?? 1
   const totalWeeks = calendar?.total_weeks ?? 15
   const examDate = calendar?.exam_start_date
-  const firstExam = calendar?.first_exam
+  const hasUpcomingExamDate = examDate && new Date(examDate).getTime() > Date.now()
 
   return (
     <div className="fade-up">
@@ -65,7 +65,7 @@ export default function Dashboard({ onNav }) {
       {/* Stat cards */}
       <div className="dashboard-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
         <StatCard icon="ti-calendar-week" color="var(--purple)" label="Academic week" value={`Week ${currentWeek}`} hint={`of ${totalWeeks}`} />
-        <StatCard icon="ti-alarm" color="var(--amber)" label="Exam countdown" value={examDate ? <ExamCountdownBadge examDate={examDate} /> : 'N/A'} hint={`First paper: ${firstExam || 'TBA'}`} />
+        <StatCard icon="ti-alarm" color="var(--amber)" label="Exam timetable" value={hasUpcomingExamDate ? <ExamCountdownBadge examDate={examDate} /> : 'Not released'} hint={hasUpcomingExamDate ? 'Countdown starts from official date' : 'Waiting for official timetable'} />
         <StatCard icon="ti-flame" color="var(--teal)" label="Quiz streak" value="5 🔥" hint="weeks in a row" />
       </div>
 

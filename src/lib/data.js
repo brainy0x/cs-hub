@@ -6,7 +6,6 @@ export const ACADEMIC = {
   level: '100L',
   programme: 'Cybersecurity Engineering',
   examStartDate: '2024-07-08', // Update this to your actual exam date
-  firstExam: 'MTH 102',
 }
 
 // ─── COURSES ──────────────────────────────────────────────────────────────────

@@ -1,14 +1,19 @@
 import React from 'react'
-import { useLiveCourses } from '../lib/liveData'
+import { useLiveCalendar, useLiveCourses } from '../lib/liveData'
 
 export default function Courses() {
   const { courses } = useLiveCourses()
+  const { calendar } = useLiveCalendar()
+  const currentWeek = calendar?.current_week ?? 1
+  const totalWeeks = calendar?.total_weeks ?? 15
+  const semesterProgress = Math.min(100, Math.max(0, Math.round((currentWeek / totalWeeks) * 100)))
+  const totalUnits = courses.reduce((sum, course) => sum + (Number(course.units) || 0), 0)
 
   return (
     <div className="fade-up">
       <div className="page-header">
         <div className="page-title">Courses</div>
-        <div className="page-sub">Semester 2 · 100 Level · 14 credit units total</div>
+        <div className="page-sub">Semester {calendar?.semester ?? 2} · 100 Level · {totalUnits} credit units total</div>
       </div>
       <div className="course-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
         {courses.map(c => (
@@ -27,15 +32,15 @@ export default function Courses() {
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)', marginBottom: 5 }}>
-                <span>Week 9 progress</span>
-                <span style={{ fontWeight: 600, color: c.color }}>{c.progress}%</span>
+                <span>Week {currentWeek} of {totalWeeks}</span>
+                <span style={{ fontWeight: 600, color: c.color }}>{semesterProgress}%</span>
               </div>
               <div className="prog-bg" style={{ height: 6 }}>
-                <div className="prog-fill" style={{ width: `${c.progress}%`, background: c.color, height: 6 }} />
+                <div className="prog-fill" style={{ width: `${semesterProgress}%`, background: c.color, height: 6 }} />
               </div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 12 }}>
-              {c.topics.map(t => <span key={t} className="topic-tag">{t}</span>)}
+              {(c.topics || []).map(t => <span key={t} className="topic-tag">{t}</span>)}
             </div>
           </div>
         ))}

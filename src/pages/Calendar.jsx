@@ -3,11 +3,13 @@ import { useLiveCalendar } from '../lib/liveData'
 
 function getEvents(calendar) {
   const currentWeek = calendar?.current_week ?? 1
+  const totalWeeks = calendar?.total_weeks ?? 15
+  const semesterProgress = Math.min(100, Math.max(0, Math.round((currentWeek / totalWeeks) * 100)))
+
   return [
     { week: 'Now', sub: `Week ${currentWeek}`, color: 'var(--teal)', title: 'Lecture period continues', desc: `Week ${currentWeek} content delivery and weekly quizzes active` },
-    { week: 'W13', sub: '~3 wks', color: 'var(--blue)', title: 'Revision week begins', desc: 'No new content. Quiz vault opens with past questions.' },
-    { week: 'W14', sub: '~5 wks', color: 'var(--amber)', title: 'Exam period starts', desc: 'MTH 102 -> CSC 106 -> PHY 102 -> COS 102 -> GST 112 -> PHY 108' },
-    { week: 'W15', sub: 'End', color: 'var(--purple)', title: 'Semester closes', desc: 'Results released 4-6 weeks after final paper. SIWES placement begins.' },
+    { week: `${semesterProgress}%`, sub: 'Done', color: 'var(--purple)', title: 'Semester progress', desc: `Week ${currentWeek} of ${totalWeeks}` },
+    { week: 'TBA', sub: 'Exam', color: 'var(--amber)', title: 'Exam timetable not released', desc: 'Official exam dates and paper order will appear here when announced.' },
   ]
 }
 
@@ -23,7 +25,7 @@ export default function Calendar() {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {events.map(e => (
-          <div key={e.week} className="card" style={{ display: 'flex', alignItems: 'center', gap: 20, borderLeft: `3px solid ${e.color}` }}>
+          <div key={e.title} className="card" style={{ display: 'flex', alignItems: 'center', gap: 20, borderLeft: `3px solid ${e.color}` }}>
             <div style={{ textAlign: 'center', minWidth: 52 }}>
               <div style={{ fontFamily: 'var(--font-head)', fontSize: e.week === 'Now' ? 18 : 20, fontWeight: 700, color: e.color }}>{e.week}</div>
               <div style={{ fontSize: 10, color: 'var(--muted)' }}>{e.sub}</div>
@@ -34,17 +36,6 @@ export default function Calendar() {
             </div>
           </div>
         ))}
-      </div>
-      <div style={{ marginTop: 24 }}>
-        <div style={{ fontFamily: 'var(--font-head)', fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Exam order</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {['MTH 102', 'CSC 106', 'PHY 102', 'COS 102', 'GST 112', 'PHY 108'].map((c, i) => (
-            <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ background: 'var(--purple-light)', color: 'var(--purple)', padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600 }}>{c}</span>
-              {i < 5 && <i className="ti ti-arrow-right" style={{ color: 'var(--hint)', fontSize: 13 }} />}
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   )

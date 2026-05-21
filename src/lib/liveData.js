@@ -59,7 +59,6 @@ export function useLiveCalendar() {
     current_week: ACADEMIC.currentWeek,
     total_weeks: ACADEMIC.totalWeeks,
     exam_start_date: ACADEMIC.examStartDate,
-    first_exam: ACADEMIC.firstExam,
     session: '2023/2024',
   })
   const [loading, setLoading] = useState(true)

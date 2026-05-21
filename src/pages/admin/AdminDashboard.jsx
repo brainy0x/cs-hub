@@ -109,7 +109,6 @@ export default function AdminDashboard() {
       light: formData.light || '#EEEDFE',
       icon: formData.icon || 'ti-book',
       topics: Array.isArray(formData.topics) ? formData.topics : formData.topics?.split(',').map(t => t.trim()).filter(Boolean) || [],
-      progress: formData.progress || 0,
     })
     if (err) {
       setError(err.message)
@@ -184,8 +183,7 @@ export default function AdminDashboard() {
     if (!calendar?.id) return
     const { error: err } = await updateCalendar(calendar.id, {
       current_week: formData.current_week || calendar.current_week,
-      exam_start_date: formData.exam_start_date || calendar.exam_start_date,
-      first_exam: formData.first_exam || calendar.first_exam,
+      exam_start_date: formData.exam_start_date === '' ? null : formData.exam_start_date || calendar.exam_start_date,
     })
     if (err) {
       setError(err.message)
@@ -208,6 +206,7 @@ export default function AdminDashboard() {
 
   // ─── RENDER ──────────────────────────────────────────────────────────────
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>Loading...</div>
+  const hasUpcomingExamDate = calendar?.exam_start_date && new Date(calendar.exam_start_date).getTime() > Date.now()
 
   return (
     <div className="fade-up">
@@ -300,15 +299,16 @@ export default function AdminDashboard() {
           {calendar && (
             <div className="card" style={{ padding: 16 }}>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Exam Countdown</div>
-                <ExamCountdown examDate={calendar.exam_start_date} />
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Exam Timetable</div>
+                {hasUpcomingExamDate
+                  ? <ExamCountdown examDate={calendar.exam_start_date} />
+                  : <div style={{ padding: 12, background: '#F4F3EE', borderRadius: 8, color: 'var(--muted)', fontSize: 12 }}>Not released yet</div>}
               </div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
                 <div>Current Week: {calendar.current_week} / {calendar.total_weeks}</div>
-                <div>Exam Date: {calendar.exam_start_date}</div>
-                <div>First Exam: {calendar.first_exam}</div>
+                <div>Exam Timetable: {hasUpcomingExamDate ? calendar.exam_start_date : 'Not released'}</div>
               </div>
-              <button onClick={() => { setModal('editCalendar'); setFormData({ current_week: calendar.current_week, exam_start_date: calendar.exam_start_date, first_exam: calendar.first_exam }); setError('') }} style={{
+              <button onClick={() => { setModal('editCalendar'); setFormData({ current_week: calendar.current_week, exam_start_date: calendar.exam_start_date || '' }); setError('') }} style={{
                 padding: '10px 16px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8,
                 cursor: 'pointer', fontWeight: 600,
               }}>Edit Calendar</button>
@@ -342,7 +342,8 @@ export default function AdminDashboard() {
       {modal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000,
+          padding: '6vh 16px', overflowY: 'auto',
         }}>
           <div className="card admin-modal" style={{ maxWidth: 500, width: '90%', padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             {error && <div style={{ padding: 10, background: '#FCEBEB', color: '#A32D2D', borderRadius: 6, marginBottom: 14, fontSize: 12 }}>{error}</div>}
@@ -353,7 +354,6 @@ export default function AdminDashboard() {
                 <Input label="Code" placeholder="CSC 106" value={formData.code} onChange={(v) => setFormData({ ...formData, code: v })} />
                 <Input label="Title" placeholder="Introduction to Programming" value={formData.title} onChange={(v) => setFormData({ ...formData, title: v })} />
                 <Input label="Units" type="number" value={formData.units} onChange={(v) => setFormData({ ...formData, units: parseInt(v) })} />
-                <Input label="Progress" type="number" value={formData.progress} onChange={(v) => setFormData({ ...formData, progress: parseInt(v) })} />
                 <Input label="Icon" placeholder="ti-code" value={formData.icon} onChange={(v) => setFormData({ ...formData, icon: v })} />
                 <Input label="Topics" placeholder="Functions, Arrays, Pointers" value={formData.topics} onChange={(v) => setFormData({ ...formData, topics: v })} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
@@ -391,8 +391,7 @@ export default function AdminDashboard() {
               <>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Edit Academic Calendar</div>
                 <Input label="Current Week" type="number" value={formData.current_week} onChange={(v) => setFormData({ ...formData, current_week: parseInt(v) })} />
-                <Input label="Exam Start Date" type="date" value={formData.exam_start_date} onChange={(v) => setFormData({ ...formData, exam_start_date: v })} />
-                <Input label="First Exam Course" placeholder="MTH 102" value={formData.first_exam} onChange={(v) => setFormData({ ...formData, first_exam: v })} />
+                <Input label="Exam Start Date (optional)" type="date" value={formData.exam_start_date} onChange={(v) => setFormData({ ...formData, exam_start_date: v })} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
                   <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
                   <button onClick={handleUpdateCalendar} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>Save</button>
