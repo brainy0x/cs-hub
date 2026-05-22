@@ -343,7 +343,7 @@ export default function AdminDashboard() {
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)',
           display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000,
-          padding: '6vh 16px', overflowY: 'auto',
+          padding: '6vh 16px', overflowY: 'auto', height: 'max-content',
         }}>
           <div className="card admin-modal" style={{ maxWidth: 500, width: '90%', padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             {error && <div style={{ padding: 10, background: '#FCEBEB', color: '#A32D2D', borderRadius: 6, marginBottom: 14, fontSize: 12 }}>{error}</div>}
