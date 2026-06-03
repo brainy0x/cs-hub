@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { supabase, getProfile } from './lib/supabase'
+import { useLiveAnnouncements } from './lib/liveData'
 import Sidebar from './components/Sidebar'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
@@ -12,70 +13,87 @@ import Announcements from './pages/Announcements'
 import AdminDashboard from './pages/admin/AdminDashboard'
 
 const PAGES = {
-  dashboard:     Dashboard,
-  courses:       Courses,
-  quiz:          Quiz,
-  leaderboard:   Leaderboard,
-  summaries:     Summaries,
-  calendar:      Calendar,
+  dashboard: Dashboard,
+  courses: Courses,
+  quiz: Quiz,
+  leaderboard: Leaderboard,
+  summaries: Summaries,
+  calendar: Calendar,
   announcements: Announcements,
-  admin:         AdminDashboard,
+  admin: AdminDashboard,
 }
 
 export default function App() {
-  const [user, setUser]   = useState(null)
+  const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [ready, setReady] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [page, setPage]   = useState('dashboard')
+  const [page, setPage] = useState(() => {
+    const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : ''
+    return hash && PAGES[hash] ? hash : 'dashboard'
+  })
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { announcements } = useLiveAnnouncements()
 
-  // Check existing session on mount and load profile admin flag
+  async function loadProfile(currentUser) {
+    if (!currentUser) {
+      setProfile(null)
+      setIsAdmin(false)
+      return
+    }
+    const { data } = await getProfile(currentUser.id)
+    setProfile(data)
+    setIsAdmin(data?.role === 'admin')
+  }
+
   useEffect(() => {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession()
       const currentUser = session?.user ?? null
       setUser(currentUser)
-      if (currentUser) {
-        const { data: profile } = await getProfile(currentUser.id)
-        setIsAdmin(profile?.role === 'admin')
-      } else {
-        setIsAdmin(false)
-      }
+      await loadProfile(currentUser)
       setReady(true)
     }
     init()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user ?? null
-      setUser(u)
-      if (!u) {
-        setIsAdmin(false)
-      } else {
-        getProfile(u.id)
-          .then(({ data }) => setIsAdmin(data?.role === 'admin'))
-          .catch(() => setIsAdmin(false))
-      }
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      loadProfile(currentUser)
     })
     return () => subscription.unsubscribe()
   }, [])
 
-  // Called by AuthPage when user signs in/up
-  const handleAuth = (u) => {
-    setUser(u)
-    if (!u) { setIsAdmin(false); return }
-    getProfile(u.id)
-      .then(({ data }) => setIsAdmin(data?.role === 'admin'))
-      .catch(() => setIsAdmin(false))
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1)
+      if (hash && PAGES[hash]) {
+        setPage(hash)
+      }
+    }
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  const handleAuth = (currentUser) => {
+    setUser(currentUser)
+    loadProfile(currentUser)
+  }
+
+  const handleNavigate = (pageKey) => {
+    if (!PAGES[pageKey]) return
+    setPage(pageKey)
+    window.location.hash = pageKey
   }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setProfile(null)
     setIsAdmin(false)
-    setPage('dashboard')
+    handleNavigate('dashboard')
   }
 
-  // Loading splash
   if (!ready) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: 'var(--font-head)', color: 'var(--muted)', gap: 10 }}>
       <i className="ti ti-shield-lock" style={{ fontSize: 22, color: 'var(--purple)' }} />
@@ -83,14 +101,12 @@ export default function App() {
     </div>
   )
 
-  // Not logged in → show auth
   if (!user) return <AuthPage onAuth={handleAuth} />
 
   const Page = PAGES[page] || Dashboard
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }} className="app-root">
-      {/* Mobile header */}
       <div className="mobile-header">
         <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700 }}>
           CS<span style={{ color: 'var(--purple)' }}>Hub</span>
@@ -102,19 +118,29 @@ export default function App() {
         </button>
       </div>
 
-      {/* Main layout */}
       <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
-        {/* Mobile overlay */}
         {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
-        {/* Sidebar */}
         <div className={`sidebar-wrapper ${sidebarOpen ? 'open' : ''}`}>
-          <Sidebar active={page} onNav={(p) => { setPage(p); setSidebarOpen(false); }} onSignOut={handleSignOut} user={user} isAdmin={isAdmin} />
+          <Sidebar
+            active={page}
+            onNav={(p) => {
+              if (PAGES[p]) {
+                setPage(p)
+                window.location.hash = p
+              }
+              setSidebarOpen(false)
+            }}
+            onSignOut={handleSignOut}
+            user={user}
+            profile={profile}
+            isAdmin={isAdmin}
+            announcementCount={announcements.length}
+          />
         </div>
 
-        {/* Main content */}
         <main className="main-content">
-          <Page onNav={setPage} user={user} />
+          <Page onNav={handleNavigate} user={user} profile={profile} />
         </main>
       </div>
 
@@ -128,9 +154,7 @@ export default function App() {
             background: var(--card);
             border-bottom: 1px solid var(--border);
           }
-          
           .menu-toggle { display: block !important; }
-          
           .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -140,7 +164,6 @@ export default function App() {
             background: rgba(0,0,0,0.3);
             z-index: 999;
           }
-          
           .sidebar-wrapper {
             position: fixed;
             left: 0;
@@ -151,17 +174,14 @@ export default function App() {
             transition: transform 0.3s ease;
             width: 220px;
           }
-          
           .sidebar-wrapper.open {
             transform: translateX(0);
           }
-          
           .main-content {
             padding: 1rem !important;
             max-width: 100vw !important;
           }
         }
-        
         @media (min-width: 769px) {
           .mobile-header { display: none; }
           .sidebar-overlay { display: none; }

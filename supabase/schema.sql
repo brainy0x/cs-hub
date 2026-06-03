@@ -225,8 +225,31 @@ select
   row_number() over (order by avg(qa.score::numeric / qa.total::numeric * 100) desc) as rank
 from public.profiles p
 left join public.quiz_attempts qa on qa.user_id = p.user_id
-where p.role = 'student'
 group by p.user_id, p.full_name, p.matric_no, p.streak;
+
+create or replace function public.reset_leaderboard(
+  p_user_id uuid default null,
+  p_course_code text default null,
+  p_score int default 0
+)
+returns void language sql security definer as $$
+  update public.quiz_attempts
+  set score = p_score
+  where (p_user_id is null or user_id = p_user_id)
+    and (p_course_code is null or course_code = p_course_code);
+$$;
+
+create or replace function public.reset_leaderboard(
+  p_course_code text default null,
+  p_score int default 0,
+  p_user_id uuid default null
+)
+returns void language sql security definer as $$
+  update public.quiz_attempts
+  set score = p_score
+  where (p_user_id is null or user_id = p_user_id)
+    and (p_course_code is null or course_code = p_course_code);
+$$;
 
 
 -- ─── ANNOUNCEMENTS ───────────────────────────────────────────

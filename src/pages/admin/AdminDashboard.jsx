@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { getCourses, addCourse, updateCourse, deleteCourse, getAnnouncements, addAnnouncement, updateAnnouncement, deleteAnnouncement, getCalendar, updateCalendar, getUsers, updateUserRole } from '../../lib/supabase'
+import { useLiveSummaries } from '../../lib/liveData'
+import { getCourses, addCourse, updateCourse, deleteCourse, getAnnouncements, addAnnouncement, updateAnnouncement, deleteAnnouncement, getCalendar, updateCalendar, getUsers, updateUserRole, getQuizQuestions, addQuizQuestion, updateQuizQuestion, deleteQuizQuestion, addSummary, updateSummary, deleteSummary } from '../../lib/supabase'
 
 // ─── COUNTDOWN COMPONENT ─────────────────────────────────────────────────────
 function ExamCountdown({ examDate }) {
@@ -48,6 +49,9 @@ export default function AdminDashboard() {
   const [announcements, setAnnouncements] = useState([])
   const [calendar, setCalendar] = useState(null)
   const [users, setUsers] = useState([])
+  const [quizQuestions, setQuizQuestions] = useState([])
+  const { summaries: liveSummaries } = useLiveSummaries()
+  const [summaries, setSummaries] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null) // null | 'addCourse' | 'editCourse' | ...
   const [formData, setFormData] = useState({})
@@ -57,18 +61,26 @@ export default function AdminDashboard() {
     loadData()
   }, [])
 
+  useEffect(() => {
+    if (Array.isArray(liveSummaries)) {
+      setSummaries(liveSummaries)
+    }
+  }, [liveSummaries])
+
   async function loadData() {
     setLoading(true)
-    const [c, a, cal, u] = await Promise.all([
+    const [c, a, cal, u, q] = await Promise.all([
       getCourses(),
       getAnnouncements(),
       getCalendar(),
       getUsers(),
+      getQuizQuestions(),
     ])
     setCourses(c.data || [])
     setAnnouncements(a.data || [])
     setCalendar(cal.data)
     setUsers(u.data || [])
+    setQuizQuestions(q.data || [])
     setLoading(false)
   }
 
@@ -178,11 +190,119 @@ export default function AdminDashboard() {
     }
   }
 
+  // ─── SUMMARIES ─────────────────────────────────────────────────────────────
+  async function handleAddSummary() {
+    if (!formData.course_code || !formData.week || !formData.title || !formData.body) {
+      setError('Course, week, title, and body are required')
+      return
+    }
+    const { error: err } = await addSummary({
+      course_code: formData.course_code,
+      week: Number(formData.week),
+      title: formData.title,
+      body: formData.body,
+      topics: formData.topics?.split(',').map((t) => t.trim()).filter(Boolean) || [],
+      quiz_ready: Boolean(formData.quiz_ready),
+      quiz_unlocks: formData.quiz_unlocks || null,
+    })
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
+  async function handleEditSummary() {
+    if (!formData.id || !formData.course_code || !formData.week || !formData.title || !formData.body) {
+      setError('Course, week, title, and body are required')
+      return
+    }
+    const { error: err } = await updateSummary(formData.id, {
+      course_code: formData.course_code,
+      week: Number(formData.week),
+      title: formData.title,
+      body: formData.body,
+      topics: formData.topics?.split(',').map((t) => t.trim()).filter(Boolean) || [],
+      quiz_ready: Boolean(formData.quiz_ready),
+      quiz_unlocks: formData.quiz_unlocks || null,
+    })
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
+  async function handleDeleteSummary(id) {
+    if (confirm('Delete this summary?')) {
+      await deleteSummary(id)
+      await loadData()
+    }
+  }
+
+  // ─── QUIZ QUESTIONS ─────────────────────────────────────────────────────
+  function questionPayload() {
+    return {
+      course_code: formData.course_code,
+      week: Number(formData.week || calendar?.current_week || 1),
+      question: formData.question,
+      options: [formData.option_a, formData.option_b, formData.option_c, formData.option_d].map(o => o?.trim()).filter(Boolean),
+      answer_index: Number(formData.answer_index || 0),
+    }
+  }
+
+  function validateQuestion(payload) {
+    if (!payload.course_code || !payload.question) return 'Course and question are required'
+    if (payload.options.length !== 4) return 'All four options are required'
+    if (payload.answer_index < 0 || payload.answer_index > 3) return 'Correct answer must be A, B, C, or D'
+    return ''
+  }
+
+  async function handleAddQuestion() {
+    const payload = questionPayload()
+    const message = validateQuestion(payload)
+    if (message) { setError(message); return }
+    const { error: err } = await addQuizQuestion(payload)
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
+  async function handleEditQuestion() {
+    const payload = questionPayload()
+    const message = validateQuestion(payload)
+    if (message) { setError(message); return }
+    const { error: err } = await updateQuizQuestion(formData.id, payload)
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
+  async function handleDeleteQuestion(id) {
+    if (confirm('Delete this quiz question?')) {
+      await deleteQuizQuestion(id)
+      await loadData()
+    }
+  }
+
   // ─── CALENDAR ────────────────────────────────────────────────────────────
   async function handleUpdateCalendar() {
     if (!calendar?.id) return
     const { error: err } = await updateCalendar(calendar.id, {
       current_week: formData.current_week || calendar.current_week,
+      semester_start_date: formData.semester_start_date === '' ? null : formData.semester_start_date || calendar.semester_start_date,
       exam_start_date: formData.exam_start_date === '' ? null : formData.exam_start_date || calendar.exam_start_date,
     })
     if (err) {
@@ -212,12 +332,12 @@ export default function AdminDashboard() {
     <div className="fade-up">
       <div className="page-header">
         <div className="page-title">Admin Panel</div>
-        <div className="page-sub">Manage courses, announcements, calendar, and users</div>
+        <div className="page-sub">Manage courses, quiz questions, announcements, calendar, and users</div>
       </div>
 
       {/* Tabs */}
       <div className="admin-tabs" style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
-        {['courses', 'announcements', 'calendar', 'users'].map((t) => (
+        {['courses', 'questions', 'announcements', 'summaries', 'calendar', 'users'].map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 16px', borderRadius: 8, border: 'none', background: tab === t ? 'var(--purple)' : 'transparent',
             color: tab === t ? '#fff' : 'var(--muted)', cursor: 'pointer', fontWeight: 500, fontSize: 13,
@@ -261,6 +381,42 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* QUESTIONS */}
+      {tab === 'questions' && (
+        <div>
+          <button onClick={() => { setModal('addQuestion'); setFormData({ week: calendar?.current_week || 1, course_code: courses[0]?.code || '', answer_index: 0 }); setError('') }} style={{
+            padding: '10px 16px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8,
+            cursor: 'pointer', fontWeight: 600, marginBottom: 16,
+          }}>
+            + Add Question
+          </button>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {quizQuestions.length === 0 && (
+              <div className="card" style={{ padding: 16, color: 'var(--muted)', fontSize: 13 }}>No quiz questions yet.</div>
+            )}
+            {quizQuestions.map((q) => (
+              <div key={q.id} className="card admin-list-row" style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: 'var(--purple)', fontWeight: 700, marginBottom: 4 }}>{q.course_code} · Week {q.week}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{q.question}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{q.options?.length || 0} options · Answer {String.fromCharCode(65 + (q.answer_index || 0))}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => { setModal('editQuestion'); setFormData({ id: q.id, course_code: q.course_code, week: q.week, question: q.question, option_a: q.options?.[0] || '', option_b: q.options?.[1] || '', option_c: q.options?.[2] || '', option_d: q.options?.[3] || '', answer_index: q.answer_index }); setError('') }} style={{
+                    background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Edit</button>
+                  <button onClick={() => handleDeleteQuestion(q.id)} style={{
+                    background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ANNOUNCEMENTS */}
       {tab === 'announcements' && (
         <div>
@@ -293,6 +449,41 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {tab === 'summaries' && (
+        <div>
+          <button onClick={() => { setModal('addSummary'); setFormData({ week: calendar?.current_week || 1, quiz_ready: false }); setError('') }} style={{
+            padding: '10px 16px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8,
+            cursor: 'pointer', fontWeight: 600, marginBottom: 16,
+          }}>
+            + Add Summary
+          </button>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {summaries.length === 0 && (
+              <div className="card" style={{ padding: 16, color: 'var(--muted)', fontSize: 13 }}>No summaries yet.</div>
+            )}
+            {summaries.map((s) => (
+              <div key={s.id} className="card admin-list-row" style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: 'var(--purple)', fontWeight: 700, marginBottom: 4 }}>{s.course_code} · Week {s.week}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{s.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Topics: {(s.topics || []).join(', ') || 'None'} · Quiz ready: {s.quiz_ready ? 'Yes' : 'No'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => { setModal('editSummary'); setFormData({ ...s, topics: (s.topics || []).join(', ') }); setError('') }} style={{
+                    background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Edit</button>
+                  <button onClick={() => handleDeleteSummary(s.id)} style={{
+                    background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* CALENDAR */}
       {tab === 'calendar' && (
         <div>
@@ -306,9 +497,10 @@ export default function AdminDashboard() {
               </div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
                 <div>Current Week: {calendar.current_week} / {calendar.total_weeks}</div>
+                <div>Semester Start: {calendar.semester_start_date || 'Not set'}</div>
                 <div>Exam Timetable: {hasUpcomingExamDate ? calendar.exam_start_date : 'Not released'}</div>
               </div>
-              <button onClick={() => { setModal('editCalendar'); setFormData({ current_week: calendar.current_week, exam_start_date: calendar.exam_start_date || '' }); setError('') }} style={{
+              <button onClick={() => { setModal('editCalendar'); setFormData({ current_week: calendar.current_week, semester_start_date: calendar.semester_start_date || '', exam_start_date: calendar.exam_start_date || '' }); setError('') }} style={{
                 padding: '10px 16px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8,
                 cursor: 'pointer', fontWeight: 600,
               }}>Edit Calendar</button>
@@ -363,6 +555,40 @@ export default function AdminDashboard() {
               </>
             )}
 
+            {(modal === 'addQuestion' || modal === 'editQuestion') && (
+              <>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{modal === 'editQuestion' ? 'Edit Question' : 'Add Question'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 10, marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted)', marginBottom: 4 }}>Course</div>
+                    <select value={formData.course_code ?? ''} onChange={(e) => setFormData({ ...formData, course_code: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}>
+                      <option value="">Select course</option>
+                      {courses.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
+                    </select>
+                  </div>
+                  <Input label="Week" type="number" value={formData.week} onChange={(v) => setFormData({ ...formData, week: parseInt(v) })} />
+                </div>
+                <Input label="Question" placeholder="Type the question" value={formData.question} onChange={(v) => setFormData({ ...formData, question: v })} />
+                <Input label="Option A" value={formData.option_a} onChange={(v) => setFormData({ ...formData, option_a: v })} />
+                <Input label="Option B" value={formData.option_b} onChange={(v) => setFormData({ ...formData, option_b: v })} />
+                <Input label="Option C" value={formData.option_c} onChange={(v) => setFormData({ ...formData, option_c: v })} />
+                <Input label="Option D" value={formData.option_d} onChange={(v) => setFormData({ ...formData, option_d: v })} />
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted)', marginBottom: 4 }}>Correct answer</div>
+                  <select value={formData.answer_index ?? 0} onChange={(e) => setFormData({ ...formData, answer_index: parseInt(e.target.value) })} style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}>
+                    <option value={0}>A</option>
+                    <option value={1}>B</option>
+                    <option value={2}>C</option>
+                    <option value={3}>D</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                  <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={modal === 'editQuestion' ? handleEditQuestion : handleAddQuestion} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>{modal === 'editQuestion' ? 'Save' : 'Add'}</button>
+                </div>
+              </>
+            )}
+
             {(modal === 'addAnnouncement' || modal === 'editAnnouncement') && (
               <>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{modal === 'editAnnouncement' ? 'Edit Announcement' : 'New Announcement'}</div>
@@ -387,10 +613,39 @@ export default function AdminDashboard() {
               </>
             )}
 
+            {(modal === 'addSummary' || modal === 'editSummary') && (
+              <>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{modal === 'editSummary' ? 'Edit Summary' : 'Add Summary'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 12 }}>
+                  <select value={formData.course_code ?? ''} onChange={(e) => setFormData({ ...formData, course_code: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}>
+                    <option value="">Select course</option>
+                    {courses.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
+                  </select>
+                  <Input label="Week" type="number" value={formData.week} onChange={(v) => setFormData({ ...formData, week: parseInt(v) })} />
+                </div>
+                <Input label="Title" placeholder="Summary title" value={formData.title} onChange={(v) => setFormData({ ...formData, title: v })} />
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted)', marginBottom: 4 }}>Body</div>
+                  <textarea value={formData.body || ''} onChange={(e) => setFormData({ ...formData, body: e.target.value })} rows={6} style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', resize: 'vertical' }} />
+                </div>
+                <Input label="Topics" placeholder="Example: networks, cryptography" value={formData.topics} onChange={(v) => setFormData({ ...formData, topics: v })} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={Boolean(formData.quiz_ready)} onChange={(e) => setFormData({ ...formData, quiz_ready: e.target.checked })} />
+                  Quiz ready
+                </label>
+                <Input label="Quiz unlocks" placeholder="Monday, Wednesday" value={formData.quiz_unlocks} onChange={(v) => setFormData({ ...formData, quiz_unlocks: v })} />
+                <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                  <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={modal === 'editSummary' ? handleEditSummary : handleAddSummary} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>{modal === 'editSummary' ? 'Save' : 'Add'}</button>
+                </div>
+              </>
+            )}
+
             {modal === 'editCalendar' && (
               <>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Edit Academic Calendar</div>
                 <Input label="Current Week" type="number" value={formData.current_week} onChange={(v) => setFormData({ ...formData, current_week: parseInt(v) })} />
+                <Input label="Semester Start Date" type="date" value={formData.semester_start_date} onChange={(v) => setFormData({ ...formData, semester_start_date: v })} />
                 <Input label="Exam Start Date (optional)" type="date" value={formData.exam_start_date} onChange={(v) => setFormData({ ...formData, exam_start_date: v })} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
                   <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>

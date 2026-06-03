@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { SUMMARIES } from '../lib/data'
-import { useLiveAnnouncements, useLiveCalendar, useLiveCourses, useLiveLeaderboard } from '../lib/liveData'
+import { useLiveAnnouncements, useLiveCalendar, useLiveCourses, useLiveLeaderboard, useLiveSummaries, useUserQuizStats } from '../lib/liveData'
 import AnnouncementBanner from '../components/AnnouncementBanner'
 
-// ─── LIVE COUNTDOWN COMPONENT ────────────────────────────────────────────────
 function ExamCountdownBadge({ examDate }) {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
@@ -39,13 +37,20 @@ function ExamCountdownBadge({ examDate }) {
   )
 }
 
-export default function Dashboard({ onNav }) {
+export default function Dashboard({ onNav, user, profile }) {
   const { calendar, loading } = useLiveCalendar()
   const { courses } = useLiveCourses()
   const { announcements } = useLiveAnnouncements()
   const { leaderboard } = useLiveLeaderboard()
+  const { summaries } = useLiveSummaries()
+  const { streak } = useUserQuizStats(user?.id)
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>Loading...</div>
+
+  const fullName = profile?.full_name || user?.user_metadata?.full_name || ''
+  const firstName = fullName.split(' ')[0] || user?.email?.split('@')[0] || 'Student'
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   const currentWeek = calendar?.current_week ?? 1
   const totalWeeks = calendar?.total_weeks ?? 15
@@ -55,24 +60,21 @@ export default function Dashboard({ onNav }) {
   return (
     <div className="fade-up">
       <div className="page-header">
-        <div className="page-title">Good morning, Brainy 👋</div>
-        <div className="page-sub">100 Level · Semester {calendar?.semester ?? 2} · Cybersecurity</div>
+        <div className="page-title">{greeting}, {firstName}</div>
+        <div className="page-sub">200 Level · Semester {calendar?.semester ?? 1} · Cybersecurity</div>
       </div>
 
-      {/* ── ANNOUNCEMENT BANNER ── */}
       <AnnouncementBanner items={announcements} />
 
-      {/* Stat cards */}
       <div className="dashboard-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
         <StatCard icon="ti-calendar-week" color="var(--purple)" label="Academic week" value={`Week ${currentWeek}`} hint={`of ${totalWeeks}`} />
         <StatCard icon="ti-alarm" color="var(--amber)" label="Exam timetable" value={hasUpcomingExamDate ? <ExamCountdownBadge examDate={examDate} /> : 'Not released'} hint={hasUpcomingExamDate ? 'Countdown starts from official date' : 'Waiting for official timetable'} />
-        <StatCard icon="ti-flame" color="var(--teal)" label="Quiz streak" value="5 🔥" hint="weeks in a row" />
+        <StatCard icon="ti-flame" color="var(--teal)" label="Quiz streak" value={`${streak} days`} hint={streak > 0 ? 'daily quiz streak' : 'no quizzes yet'} />
       </div>
 
-      {/* Week timeline */}
       <div className="card week-timeline" style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, marginBottom: 10 }}>
-          Semester {calendar?.semester ?? 2} progress — Week {currentWeek} of {totalWeeks}
+          Semester {calendar?.semester ?? 1} progress — Week {currentWeek} of {totalWeeks}
         </div>
         <div style={{ display: 'flex', gap: 5 }}>
           {Array.from({ length: totalWeeks }, (_, i) => i + 1).map(w => {
@@ -93,7 +95,6 @@ export default function Dashboard({ onNav }) {
         </div>
       </div>
 
-      {/* Two column */}
       <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         <div className="card">
           <div className="sec-head">
@@ -113,7 +114,7 @@ export default function Dashboard({ onNav }) {
         </div>
         <div className="card dashboard-leaderboard">
           <div className="sec-head">
-            <div className="sec-title"><i className="ti ti-trophy" /> This week's leaderboard</div>
+            <div className="sec-title"><i className="ti ti-trophy" /> Leaderboard</div>
             <span style={{ fontSize: 12, color: 'var(--purple)', cursor: 'pointer' }} onClick={() => onNav('leaderboard')}>Full board</span>
           </div>
           {leaderboard.length === 0 && (
@@ -132,27 +133,23 @@ export default function Dashboard({ onNav }) {
         </div>
       </div>
 
-      {/* Summaries */}
       <div className="card">
         <div className="sec-head">
           <div className="sec-title"><i className="ti ti-file-description" /> Week {currentWeek} summaries</div>
           <span style={{ fontSize: 12, color: 'var(--purple)', cursor: 'pointer' }} onClick={() => onNav('summaries')}>All summaries</span>
         </div>
         <div className="summary-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {Object.entries(SUMMARIES).map(([code, s]) => (
-            <div key={code} style={{ padding: '12px', border: '1px solid var(--border)', borderRadius: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: s.color, marginBottom: 5 }}>{code} · Week {s.week}</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.65 }}>{s.body.slice(0, 100)}...</div>
-              <div className="prog-bg" style={{ marginTop: 8 }}>
-                <div className="prog-fill" style={{ width: '60%', background: s.color }} />
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--hint)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-                {s.quizReady
-                  ? <><i className="ti ti-bolt" style={{ color: s.color }} /><span style={{ color: s.color }}>Quiz available now</span></>
-                  : <><i className="ti ti-clock" /> Quiz unlocks {s.quizUnlocks}</>}
-              </div>
+          {summaries.filter((s) => s.week === currentWeek).map((s) => (
+            <div key={`${s.course_code}-${s.week}`} style={{ padding: '12px', border: '1px solid var(--border)', borderRadius: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', marginBottom: 5 }}>{s.course_code} · Week {s.week}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.65 }}>{(s.body || '').slice(0, 120)}...</div>
             </div>
           ))}
+          {summaries.filter((s) => s.week === currentWeek).length === 0 && (
+            <div style={{ gridColumn: '1 / -1', padding: 16, color: 'var(--muted)', textAlign: 'center' }}>
+              No summaries available for week {currentWeek} yet.
+            </div>
+          )}
         </div>
       </div>
     </div>
