@@ -67,9 +67,12 @@ create trigger on_auth_user_created
 create table public.academic_calendar (
   id              uuid primary key default uuid_generate_v4(),
   semester        int not null,
+  level           text not null default '200L',
+  programme       text not null default 'Cybersecurity Engineering',
   session         text not null,           -- e.g. '2023/2024'
   current_week    int not null default 1,
   total_weeks     int not null default 15,
+  semester_start_date date,
   exam_start_date date,
   first_exam      text,
   updated_at      timestamptz default now()
@@ -88,8 +91,8 @@ create policy "Admins can manage calendar"
   ));
 
 -- Seed initial calendar row
-insert into public.academic_calendar (semester, session, current_week, total_weeks, exam_start_date, first_exam)
-values (2, '2023/2024', 9, 15, '2024-07-08', 'MTH 102');
+insert into public.academic_calendar (semester, level, programme, session, current_week, total_weeks, semester_start_date, exam_start_date, first_exam)
+values (2, '200L', 'Cybersecurity Engineering', '2023/2024', 9, 15, '2024-01-08', '2024-07-08', 'MTH 102');
 
 
 -- ─── COURSES ─────────────────────────────────────────────────
