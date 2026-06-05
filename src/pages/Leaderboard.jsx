@@ -8,6 +8,8 @@ export default function Leaderboard({ user, profile }) {
   const { leaderboard, loading } = useLiveLeaderboard()
   const { calendar } = useLiveCalendar()
   const currentWeek = calendar?.current_week ?? 1
+  const level = calendar?.level || '200L'
+  const programme = calendar?.programme || 'Cybersecurity'
   const userId = user?.id
   const isAdmin = profile?.role === 'admin'
   const userInLeaderboard = userId && leaderboard.some((row) => String(row.user_id) === String(userId))
@@ -131,7 +133,7 @@ export default function Leaderboard({ user, profile }) {
                     {s.full_name || 'Student'}
                     {isCurrentUser && <span style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 700, background: '#F4E9FF', padding: '1px 6px', borderRadius: 999 }}>You</span>}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{s.matric_no || '100L · Cybersecurity'}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{s.matric_no || `${level} · ${programme}`}</div>
                 </div>
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--purple)' }}>{s.avg_score ?? 0}%</div>

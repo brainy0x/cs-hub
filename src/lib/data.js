@@ -3,7 +3,7 @@ export const ACADEMIC = {
   currentWeek: 9,
   totalWeeks: 15,
   semester: 2,
-  level: '100L',
+  level: '200L',
   programme: 'Cybersecurity Engineering',
   examStartDate: '2024-07-08', // Update this to your actual exam date
 }

@@ -56,12 +56,14 @@ export default function Dashboard({ onNav, user, profile }) {
   const totalWeeks = calendar?.total_weeks ?? 15
   const examDate = calendar?.exam_start_date
   const hasUpcomingExamDate = examDate && new Date(examDate).getTime() > Date.now()
+  const level = calendar?.level || '200L'
+  const programme = calendar?.programme || 'Cybersecurity'
 
   return (
     <div className="fade-up">
       <div className="page-header">
         <div className="page-title">{greeting}, {firstName}</div>
-        <div className="page-sub">200 Level · Semester {calendar?.semester ?? 1} · Cybersecurity</div>
+        <div className="page-sub">{level} · Semester {calendar?.semester ?? 1} · {programme}</div>
       </div>
 
       <AnnouncementBanner items={announcements} />

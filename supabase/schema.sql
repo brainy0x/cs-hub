@@ -90,9 +90,16 @@ create policy "Admins can manage calendar"
     where p.user_id = auth.uid() and p.role = 'admin'
   ));
 
--- Seed initial calendar row
+-- Add missing calendar columns if the table already exists
+alter table public.academic_calendar
+  add column if not exists level text not null default '200L',
+  add column if not exists programme text not null default 'Cybersecurity Engineering',
+  add column if not exists semester_start_date date;
+
+-- Seed initial calendar row if none exists
 insert into public.academic_calendar (semester, level, programme, session, current_week, total_weeks, semester_start_date, exam_start_date, first_exam)
-values (2, '200L', 'Cybersecurity Engineering', '2023/2024', 9, 15, '2024-01-08', '2024-07-08', 'MTH 102');
+select 2, '200L', 'Cybersecurity Engineering', '2023/2024', 9, 15, '2024-01-08', '2024-07-08', 'MTH 102'
+where not exists (select 1 from public.academic_calendar);
 
 
 -- ─── COURSES ─────────────────────────────────────────────────

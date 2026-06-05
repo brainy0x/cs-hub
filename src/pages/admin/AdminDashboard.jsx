@@ -301,7 +301,10 @@ export default function AdminDashboard() {
   async function handleUpdateCalendar() {
     if (!calendar?.id) return
     const { error: err } = await updateCalendar(calendar.id, {
-      current_week: formData.current_week || calendar.current_week,
+      semester: Number(formData.semester || calendar.semester),
+      level: formData.level || calendar.level,
+      programme: formData.programme || calendar.programme,
+      current_week: Number(formData.current_week || calendar.current_week),
       semester_start_date: formData.semester_start_date === '' ? null : formData.semester_start_date || calendar.semester_start_date,
       exam_start_date: formData.exam_start_date === '' ? null : formData.exam_start_date || calendar.exam_start_date,
     })
@@ -496,11 +499,14 @@ export default function AdminDashboard() {
                   : <div style={{ padding: 12, background: '#F4F3EE', borderRadius: 8, color: 'var(--muted)', fontSize: 12 }}>Not released yet</div>}
               </div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
+                <div>Level: {calendar.level || '200L'}</div>
+                <div>Programme: {calendar.programme || 'Cybersecurity Engineering'}</div>
+                <div>Semester: {calendar.semester}</div>
                 <div>Current Week: {calendar.current_week} / {calendar.total_weeks}</div>
                 <div>Semester Start: {calendar.semester_start_date || 'Not set'}</div>
                 <div>Exam Timetable: {hasUpcomingExamDate ? calendar.exam_start_date : 'Not released'}</div>
               </div>
-              <button onClick={() => { setModal('editCalendar'); setFormData({ current_week: calendar.current_week, semester_start_date: calendar.semester_start_date || '', exam_start_date: calendar.exam_start_date || '' }); setError('') }} style={{
+              <button onClick={() => { setModal('editCalendar'); setFormData({ semester: calendar.semester, level: calendar.level || '200L', programme: calendar.programme || 'Cybersecurity Engineering', current_week: calendar.current_week, semester_start_date: calendar.semester_start_date || '', exam_start_date: calendar.exam_start_date || '' }); setError('') }} style={{
                 padding: '10px 16px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8,
                 cursor: 'pointer', fontWeight: 600,
               }}>Edit Calendar</button>
@@ -644,6 +650,11 @@ export default function AdminDashboard() {
             {modal === 'editCalendar' && (
               <>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Edit Academic Calendar</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <Input label="Semester" type="number" value={formData.semester} onChange={(v) => setFormData({ ...formData, semester: parseInt(v) })} />
+                  <Input label="Level" placeholder="200L" value={formData.level} onChange={(v) => setFormData({ ...formData, level: v })} />
+                </div>
+                <Input label="Programme" placeholder="Cybersecurity Engineering" value={formData.programme} onChange={(v) => setFormData({ ...formData, programme: v })} />
                 <Input label="Current Week" type="number" value={formData.current_week} onChange={(v) => setFormData({ ...formData, current_week: parseInt(v) })} />
                 <Input label="Semester Start Date" type="date" value={formData.semester_start_date} onChange={(v) => setFormData({ ...formData, semester_start_date: v })} />
                 <Input label="Exam Start Date (optional)" type="date" value={formData.exam_start_date} onChange={(v) => setFormData({ ...formData, exam_start_date: v })} />
