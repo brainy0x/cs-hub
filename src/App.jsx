@@ -9,6 +9,7 @@ import Quiz from './pages/Quiz'
 import Leaderboard from './pages/Leaderboard'
 import Summaries from './pages/Summaries'
 import Calendar from './pages/Calendar'
+import Links from './pages/Links'
 import Announcements from './pages/Announcements'
 import AdminDashboard from './pages/admin/AdminDashboard'
 
@@ -17,6 +18,7 @@ const PAGES = {
   courses: Courses,
   quiz: Quiz,
   leaderboard: Leaderboard,
+  links: Links,
   summaries: Summaries,
   calendar: Calendar,
   announcements: Announcements,
@@ -33,6 +35,10 @@ export default function App() {
     return hash && PAGES[hash] ? hash : 'dashboard'
   })
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'light'
+    return window.localStorage.getItem('cs-hub-theme') === 'dark' ? 'dark' : 'light'
+  })
   const { announcements } = useLiveAnnouncements()
 
   async function loadProfile(currentUser) {
@@ -74,6 +80,13 @@ export default function App() {
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  useEffect(() => {
+    document.body.classList.toggle('dark-mode', theme === 'dark')
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('cs-hub-theme', theme)
+    }
+  }, [theme])
 
   const handleAuth = (currentUser) => {
     setUser(currentUser)
@@ -136,6 +149,8 @@ export default function App() {
             profile={profile}
             isAdmin={isAdmin}
             announcementCount={announcements.length}
+            theme={theme}
+            onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
           />
         </div>
 

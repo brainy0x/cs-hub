@@ -86,7 +86,7 @@ export default function Dashboard({ onNav, user, profile }) {
               <div key={w} style={{
                 flex: 1, textAlign: 'center', padding: '6px 2px',
                 borderRadius: 6, border: `1px solid ${isCurrent ? 'var(--purple-mid)' : 'var(--border)'}`,
-                background: isCurrent ? 'var(--purple-light)' : isPast ? '#F4F3EE' : 'transparent',
+                background: isCurrent ? 'var(--purple-light)' : isPast ? 'var(--border)' : 'transparent',
                 boxShadow: isCurrent ? '0 0 0 2px rgba(83,74,183,0.10), 0 0 18px rgba(83,74,183,0.28)' : 'none',
               }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: isCurrent ? 'var(--purple)' : isPast ? 'var(--teal)' : 'var(--hint)' }}>W{w}</div>

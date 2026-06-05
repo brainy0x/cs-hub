@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLiveSummaries } from '../../lib/liveData'
-import { getCourses, addCourse, updateCourse, deleteCourse, getAnnouncements, addAnnouncement, updateAnnouncement, deleteAnnouncement, getCalendar, updateCalendar, getUsers, updateUserRole, getQuizQuestions, addQuizQuestion, updateQuizQuestion, deleteQuizQuestion, addSummary, updateSummary, deleteSummary } from '../../lib/supabase'
+import { getCourses, addCourse, updateCourse, deleteCourse, getAnnouncements, addAnnouncement, updateAnnouncement, deleteAnnouncement, getCalendar, updateCalendar, getUsers, updateUserRole, getQuizQuestions, addQuizQuestion, updateQuizQuestion, deleteQuizQuestion, getSummaries, addSummary, updateSummary, deleteSummary, getLinks, addLink, updateLink, deleteLink } from '../../lib/supabase'
 
 // ─── COUNTDOWN COMPONENT ─────────────────────────────────────────────────────
 function ExamCountdown({ examDate }) {
@@ -50,6 +50,7 @@ export default function AdminDashboard() {
   const [calendar, setCalendar] = useState(null)
   const [users, setUsers] = useState([])
   const [quizQuestions, setQuizQuestions] = useState([])
+  const [links, setLinks] = useState([])
   const { summaries: liveSummaries } = useLiveSummaries()
   const [summaries, setSummaries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -81,6 +82,8 @@ export default function AdminDashboard() {
     setCalendar(cal.data)
     setUsers(u.data || [])
     setQuizQuestions(q.data || [])
+    const linkResponse = await getLinks(false)
+    setLinks(linkResponse.data || [])
     setLoading(false)
   }
 
@@ -244,6 +247,58 @@ export default function AdminDashboard() {
     }
   }
 
+  // ─── LINKS ─────────────────────────────────────────────────────────────────
+  async function handleAddLink() {
+    if (!formData.title || !formData.url || !formData.category) {
+      setError('Title, URL, and category are required')
+      return
+    }
+    const { error: err } = await addLink({
+      title: formData.title,
+      url: formData.url,
+      category: formData.category,
+      description: formData.description || null,
+      active: formData.active !== false,
+      position: Number(formData.position || 0),
+    })
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
+  async function handleEditLink() {
+    if (!formData.id || !formData.title || !formData.url || !formData.category) {
+      setError('Title, URL, and category are required')
+      return
+    }
+    const { error: err } = await updateLink(formData.id, {
+      title: formData.title,
+      url: formData.url,
+      category: formData.category,
+      description: formData.description || null,
+      active: formData.active !== false,
+      position: Number(formData.position || 0),
+    })
+    if (err) {
+      setError(err.message)
+    } else {
+      setModal(null)
+      setFormData({})
+      await loadData()
+    }
+  }
+
+  async function handleDeleteLink(id) {
+    if (confirm('Delete this link?')) {
+      await deleteLink(id)
+      await loadData()
+    }
+  }
+
   // ─── QUIZ QUESTIONS ─────────────────────────────────────────────────────
   function questionPayload() {
     return {
@@ -340,7 +395,7 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div className="admin-tabs" style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
-        {['courses', 'questions', 'announcements', 'summaries', 'calendar', 'users'].map((t) => (
+        {['courses', 'questions', 'announcements', 'links', 'summaries', 'calendar', 'users'].map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 16px', borderRadius: 8, border: 'none', background: tab === t ? 'var(--purple)' : 'transparent',
             color: tab === t ? '#fff' : 'var(--muted)', cursor: 'pointer', fontWeight: 500, fontSize: 13,
@@ -442,6 +497,40 @@ export default function AdminDashboard() {
                     cursor: 'pointer', fontSize: 12, fontWeight: 500,
                   }}>Edit</button>
                   <button onClick={() => handleDeleteAnnouncement(a.id)} style={{
+                    background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'links' && (
+        <div>
+          <button onClick={() => { setModal('addLink'); setFormData({ title: '', url: '', category: 'support', position: links.length + 1, active: true }); setError('') }} style={{
+            padding: '10px 16px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8,
+            cursor: 'pointer', fontWeight: 600, marginBottom: 16,
+          }}>
+            + Add Link
+          </button>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {links.length === 0 && (
+              <div className="card" style={{ padding: 16, color: 'var(--muted)', fontSize: 13 }}>No links yet.</div>
+            )}
+            {links.map((l) => (
+              <div key={l.id} className="card admin-list-row" style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{l.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{l.url} · {l.category} {l.active === false ? '· Inactive' : ''}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => { setModal('editLink'); setFormData(l); setError('') }} style={{
+                    background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', borderRadius: 6, padding: '6px 10px',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                  }}>Edit</button>
+                  <button onClick={() => handleDeleteLink(l.id)} style={{
                     background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '6px 10px',
                     cursor: 'pointer', fontSize: 12, fontWeight: 500,
                   }}>Delete</button>
@@ -643,6 +732,32 @@ export default function AdminDashboard() {
                 <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
                   <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
                   <button onClick={modal === 'editSummary' ? handleEditSummary : handleAddSummary} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>{modal === 'editSummary' ? 'Save' : 'Add'}</button>
+                </div>
+              </>
+            )}
+
+            {(modal === 'addLink' || modal === 'editLink') && (
+              <>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{modal === 'editLink' ? 'Edit Link' : 'Add Link'}</div>
+                <Input label="Title" placeholder="Link title" value={formData.title} onChange={(v) => setFormData({ ...formData, title: v })} />
+                <Input label="URL" placeholder="https://example.com" value={formData.url} onChange={(v) => setFormData({ ...formData, url: v })} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: 10 }}>
+                  <select value={formData.category ?? 'support'} onChange={(e) => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)' }}>
+                    <option value="website">School Website</option>
+                    <option value="portal">Student Portal</option>
+                    <option value="support">Support</option>
+                    <option value="community">Community</option>
+                  </select>
+                  <Input label="Position" type="number" value={formData.position} onChange={(v) => setFormData({ ...formData, position: Number(v) })} />
+                </div>
+                <Input label="Description" placeholder="Optional description" value={formData.description} onChange={(v) => setFormData({ ...formData, description: v })} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.active !== false} onChange={(e) => setFormData({ ...formData, active: e.target.checked })} />
+                  Active
+                </label>
+                <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                  <button onClick={() => setModal(null)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={modal === 'editLink' ? handleEditLink : handleAddLink} style={{ flex: 1, padding: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>{modal === 'editLink' ? 'Save' : 'Add'}</button>
                 </div>
               </>
             )}

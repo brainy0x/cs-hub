@@ -98,7 +98,7 @@ function MarqueeStrip({ items }) {
 // ─── EXPANDED PANEL ───────────────────────────────────────────────────────────
 function ExpandedPanel({ items, onClose }) {
   return (
-    <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #2a2a28', display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--announcement-border, #2a2a28)', display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--announcement-panel, #242422)' }}>
       {items.map(item => {
         const cfg = TYPE_CONFIG[item.type]
         return (
@@ -138,8 +138,8 @@ export default function AnnouncementBanner({ items = ANNOUNCEMENTS }) {
 
   return (
     <div className="announcement-banner" style={{
-      background: '#1a1a18',
-      border: '1px solid #2a2a28',
+      background: 'var(--announcement-bg, #1a1a18)',
+      border: '1px solid var(--announcement-border, #2a2a28)',
       borderRadius: 10,
       marginBottom: 16,
       overflow: 'hidden',

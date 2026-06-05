@@ -190,6 +190,42 @@ export const getSummaries = async () => {
   return { data, error }
 }
 
+export const getLinks = async (activeOnly = true) => {
+  let query = supabase
+    .from('resource_links')
+    .select('*')
+    .order('position', { ascending: true })
+    .order('title', { ascending: true })
+  if (activeOnly) query = query.eq('active', true)
+  const { data, error } = await query
+  return { data, error }
+}
+
+export const addLink = async (link) => {
+  const { data, error } = await supabase
+    .from('resource_links')
+    .insert(link)
+    .select()
+  return { data, error }
+}
+
+export const updateLink = async (id, updates) => {
+  const { data, error } = await supabase
+    .from('resource_links')
+    .update(updates)
+    .eq('id', id)
+    .select()
+  return { data, error }
+}
+
+export const deleteLink = async (id) => {
+  const { error } = await supabase
+    .from('resource_links')
+    .delete()
+    .eq('id', id)
+  return { error }
+}
+
 export const addSummary = async (summary) => {
   const { data, error } = await supabase
     .from('summaries')

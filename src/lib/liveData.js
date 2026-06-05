@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { COURSES, ACADEMIC } from './data'
-import { getAnnouncements, getCalendar, getCourses, getLeaderboard, getQuizQuestions, getSummaries, getUserQuizAttempts, supabase } from './supabase'
+import { getAnnouncements, getCalendar, getCourses, getLeaderboard, getLinks, getQuizQuestions, getSummaries, getUserQuizAttempts, supabase } from './supabase'
 import { ANNOUNCEMENTS } from '../components/AnnouncementBanner'
 
 const subscribeToTable = (table, onChange) => {
@@ -218,4 +218,26 @@ export function useLiveSummaries() {
   }, [])
 
   return { summaries, loading }
+}
+
+export function useLiveLinks() {
+  const [links, setLinks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    async function load() {
+      const { data, error } = await getLinks()
+      if (mounted && !error) setLinks(data || [])
+      if (mounted) setLoading(false)
+    }
+    load()
+    const channel = subscribeToTable('resource_links', load)
+    return () => {
+      mounted = false
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  return { links, loading }
 }

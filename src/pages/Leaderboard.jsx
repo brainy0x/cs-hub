@@ -95,7 +95,7 @@ export default function Leaderboard({ user, profile }) {
       )}
       {/* Table */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 80px', padding: '10px 16px', background: '#F4F3EE', fontSize: 11, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 80px', padding: '10px 16px', background: 'var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--hint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           <div>Rank</div><div>Student</div><div>Score</div><div>Streak</div><div>Quizzes</div>
         </div>
         {loading && (
@@ -117,11 +117,11 @@ export default function Leaderboard({ user, profile }) {
               padding: '13px 16px',
               borderTop: '1px solid var(--border)',
               alignItems: 'center',
-              background: isCurrentUser ? 'rgba(34, 139, 230, 0.12)' : i === 0 ? 'var(--purple-light)' : 'transparent',
+              background: isCurrentUser ? 'rgba(124, 99, 242, 0.12)' : i === 0 ? 'rgba(83, 74, 183, 0.2)' : 'transparent',
               boxShadow: isCurrentUser ? 'inset 3px 0 0 0 var(--purple)' : 'none',
               transition: 'background 0.1s, box-shadow 0.1s',
             }}
-              onMouseEnter={e => { if (!isCurrentUser && i !== 0) e.currentTarget.style.background = '#FAFAF7' }}
+              onMouseEnter={e => { if (!isCurrentUser && i !== 0) e.currentTarget.style.background = 'var(--border)' }}
               onMouseLeave={e => { if (!isCurrentUser && i !== 0) e.currentTarget.style.background = 'transparent' }}>
               <div style={{ fontSize: i < 3 ? 18 : 13, fontWeight: 700, color: 'var(--hint)', textAlign: 'center' }}>
                 {isCurrentUser && !userInLeaderboard ? 'You' : i < 3 ? MEDALS[i] : i + 1}
@@ -131,7 +131,7 @@ export default function Leaderboard({ user, profile }) {
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                     {s.full_name || 'Student'}
-                    {isCurrentUser && <span style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 700, background: '#F4E9FF', padding: '1px 6px', borderRadius: 999 }}>You</span>}
+                    {isCurrentUser && <span style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 700, background: 'var(--purple-light)', padding: '1px 6px', borderRadius: 999 }}>You</span>}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--muted)' }}>{s.matric_no || `${level} · ${programme}`}</div>
                 </div>

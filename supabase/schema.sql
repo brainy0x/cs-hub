@@ -167,6 +167,37 @@ create policy "Admins can manage summaries"
   ));
 
 
+-- ─── RESOURCE LINKS ─────────────────────────────────────────────────────
+create table if not exists public.resource_links (
+  id          uuid primary key default uuid_generate_v4(),
+  title       text not null,
+  url         text not null,
+  description text,
+  category    text not null default 'support', -- website | portal | support | community
+  position    int not null default 0,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.resource_links enable row level security;
+
+create policy "Anyone can read resource links"
+  on public.resource_links for select using (true);
+
+create policy "Admins can manage resource links"
+  on public.resource_links for all
+  using (exists (
+    select 1 from public.profiles p
+    where p.user_id = auth.uid() and p.role = 'admin'
+  ));
+
+-- Seed default resource links if none exist
+insert into public.resource_links (title, url, description, category, position)
+select 'School Website', 'https://www.example.edu', 'Official university website', 'website', 10
+where not exists (select 1 from public.resource_links);
+
+
+
 -- ─── QUIZ QUESTIONS ──────────────────────────────────────────
 create table public.quiz_questions (
   id           uuid primary key default uuid_generate_v4(),
