@@ -88,6 +88,16 @@ export default function App() {
     }
   }, [theme])
 
+  useEffect(() => {
+    // Disable scrolling when sidebar is open on mobile
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      document.body.style.overflow = sidebarOpen ? 'hidden' : ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [sidebarOpen])
+
   const handleAuth = (currentUser) => {
     setUser(currentUser)
     loadProfile(currentUser)
@@ -168,6 +178,9 @@ export default function App() {
             padding: 1rem;
             background: var(--card);
             border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
           }
           .menu-toggle { display: block !important; }
           .sidebar-overlay {
@@ -187,7 +200,10 @@ export default function App() {
             z-index: 1000;
             transform: translateX(-100%);
             transition: transform 0.3s ease;
-            width: 220px;
+            width: 70vw;
+            max-width: 280px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
           }
           .sidebar-wrapper.open {
             transform: translateX(0);

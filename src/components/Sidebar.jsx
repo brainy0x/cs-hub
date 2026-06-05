@@ -10,16 +10,15 @@ const WHATSAPP_URL = import.meta.env.VITE_WHATSAPP_URL
 
 const s = {
   sidebar: { width: 260, background: 'var(--sidebar)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' },
-  logo: { padding: '1.25rem 1rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 },
+  logo: { padding: '1.25rem 1rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
   logoIcon: { width: 32, height: 32, background: 'var(--purple)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16 },
   logoText: { fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px' },
-  nav: { padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' },
+  nav: { padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', minHeight: 0 },
   navLabel: { fontSize: 10, color: 'var(--hint)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.75rem 0.5rem 0.25rem' },
   item: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, fontSize: 13, color: 'var(--sidebar-text)', cursor: 'pointer', border: 'none', background: 'transparent', width: '100%', textAlign: 'left', transition: 'all 0.2s ease', fontFamily: 'var(--font-body)' },
-  bottom: { padding: '0.75rem', borderTop: '1px solid var(--border)' },
+  bottom: { padding: '0.75rem', borderTop: '1px solid var(--border)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 },
   pill: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, background: 'var(--sidebar-pill)' },
   themeButton: {
-    marginTop: 10,
     width: '100%',
     padding: '10px 12px',
     borderRadius: 10,
