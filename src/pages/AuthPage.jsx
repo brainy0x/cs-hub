@@ -64,7 +64,7 @@ export default function AuthPage({ onAuth }) {
           <div className="auth-title">
             CS<span>Hub</span>
           </div>
-          <div className="auth-subtitle">Miva Open University · Cybersecurity</div>
+          <div className="auth-subtitle">Miva Open University · Cybersecurity · September 2025 Cohort </div>
         </div>
 
         {/* Card */}
@@ -86,7 +86,7 @@ export default function AuthPage({ onAuth }) {
           {/* Fields */}
           <div className="auth-fields">
             {mode === 'signup' && (
-              <Field label="Full name" icon="ti-user" type="text" placeholder="Oluwapekarere Adeyinka"
+              <Field label="Full name" icon="ti-user" type="text" placeholder="Put name for here"
                 value={form.fullName} onChange={v => update('fullName', v)} />
             )}
             <Field label="Miva email" icon="ti-mail" type="email" placeholder="you@miva.edu.ng"
