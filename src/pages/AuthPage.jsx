@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function AuthPage({ onAuth }) {
+export default function AuthPage({ onAuth, onNavigate }) {
   const [mode, setMode] = useState('login') // 'login' | 'signup'
   const [form, setForm] = useState({ fullName: '', email: '', password: '', matric: '' })
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
@@ -26,6 +27,10 @@ export default function AuthPage({ onAuth }) {
     }
     if (mode === 'signup' && !form.fullName.trim()) {
       setError('Please enter your full name.')
+      return
+    }
+    if (mode === 'signup' && !acceptedTerms) {
+      setError('You must agree to the Privacy Policy and Terms of Use before signing up.')
       return
     }
 
@@ -95,6 +100,16 @@ export default function AuthPage({ onAuth }) {
             <Field label="Password" icon="ti-lock" type="password" placeholder="Min. 6 characters"
               value={form.password} onChange={v => update('password', v)}
               onEnter={handleSubmit} />
+
+            {mode === 'signup' && (
+              <label className="auth-agreement">
+                <input type="checkbox" checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)} />
+                <span>I agree to the </span>
+                <button type="button" onClick={() => onNavigate ? onNavigate('terms') : window.location.hash = 'terms'}>Terms of Use</button>
+                <span> and </span>
+                <button type="button" onClick={() => onNavigate ? onNavigate('privacy') : window.location.hash = 'privacy'}>Privacy Policy</button>
+              </label>
+            )}
           </div>
 
           {/* Error / success */}
@@ -124,6 +139,12 @@ export default function AuthPage({ onAuth }) {
               : 'Your account will be verified via your Miva email.'
             }
           </div>
+
+          <div className="auth-policy-links">
+            <button type="button" onClick={() => onNavigate ? onNavigate('privacy') : window.location.hash = 'privacy'}>Privacy Policy</button>
+            <button type="button" onClick={() => onNavigate ? onNavigate('terms') : window.location.hash = 'terms'}>Terms of Use</button>
+          </div>
+          <div className="auth-copyright">© {new Date().getFullYear()} CS Hub. All rights reserved.</div>
         </div>
       </div>
 
@@ -191,8 +212,10 @@ export default function AuthPage({ onAuth }) {
         /* --- CARD & TABS --- */
         .auth-card {
           padding: 2rem;
-          background: var(--card-bg, #fff); /* Fallback if var(--card-bg) isn't set globally */
+          background: var(--card);
           border-radius: 12px;
+          color: var(--text);
+          box-shadow: var(--shadow);
         }
 
         .auth-tabs {
@@ -258,6 +281,43 @@ export default function AuthPage({ onAuth }) {
           color: #0F6E56;
         }
 
+        .dark-mode .auth-card {
+          background: var(--card);
+          color: var(--text);
+        }
+
+        .dark-mode .auth-alert.error {
+          background: #4c1f1f;
+          border: 1px solid #8e2f2f;
+          color: #ffcccb;
+        }
+
+        .dark-mode .auth-alert.success {
+          background: #1a3d2f;
+          border: 1px solid #2fa46b;
+          color: #b8f2d7;
+        }
+
+        .dark-mode .auth-tabs {
+          background: #162031;
+        }
+
+        .dark-mode .auth-tab-btn {
+          color: #a0aec0;
+        }
+
+        .dark-mode .auth-tab-btn.active {
+          background: var(--card);
+          color: var(--text);
+        }
+
+        .dark-mode .auth-agreement,
+        .dark-mode .auth-footer-note,
+        .dark-mode .auth-policy-links button,
+        .dark-mode .auth-copyright {
+          color: var(--muted);
+        }
+
         /* --- BUTTON --- */
         .auth-submit-btn {
           width: 100%;
@@ -293,6 +353,48 @@ export default function AuthPage({ onAuth }) {
           color: var(--hint);
           text-align: center;
           line-height: 1.6;
+        }
+
+        .auth-policy-links {
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 18px;
+          flex-wrap: wrap;
+        }
+
+        .auth-policy-links button,
+        .auth-agreement button {
+          border: none;
+          background: transparent;
+          color: var(--muted);
+          cursor: pointer;
+          padding: 0;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .auth-agreement {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 10px;
+          color: var(--muted);
+          font-size: 12px;
+        }
+
+        .auth-agreement input {
+          width: 16px;
+          height: 16px;
+          margin-right: 8px;
+        }
+
+        .auth-copyright {
+          margin-top: 14px;
+          font-size: 11px;
+          color: var(--hint);
+          text-align: center;
         }
 
         /* --- MOBILE OVERRIDES --- */

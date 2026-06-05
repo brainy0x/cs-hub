@@ -10,6 +10,8 @@ import Leaderboard from './pages/Leaderboard'
 import Summaries from './pages/Summaries'
 import Calendar from './pages/Calendar'
 import Links from './pages/Links'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import Announcements from './pages/Announcements'
 import AdminDashboard from './pages/admin/AdminDashboard'
 
@@ -19,6 +21,8 @@ const PAGES = {
   quiz: Quiz,
   leaderboard: Leaderboard,
   links: Links,
+  privacy: Privacy,
+  terms: Terms,
   summaries: Summaries,
   calendar: Calendar,
   announcements: Announcements,
@@ -124,9 +128,27 @@ export default function App() {
     </div>
   )
 
-  if (!user) return <AuthPage onAuth={handleAuth} />
-
+  const publicPages = ['privacy', 'terms']
   const Page = PAGES[page] || Dashboard
+
+  if (!user && publicPages.includes(page)) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }} className="app-root">
+        <main className="main-content" style={{ flex: 1, padding: '1rem' }}>
+          <Page onNav={handleNavigate} user={user} profile={profile} />
+        </main>
+        <footer style={{ width: '100%', padding: '14px 16px', borderTop: '1px solid var(--border)', background: 'var(--card)', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12, fontSize: 12, color: 'var(--muted)' }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button onClick={() => handleNavigate('privacy')} style={{ background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>Privacy Policy</button>
+            <button onClick={() => handleNavigate('terms')} style={{ background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>Terms of Use</button>
+          </div>
+          <div>© {new Date().getFullYear()} CS Hub. All rights reserved.</div>
+        </footer>
+      </div>
+    )
+  }
+
+  if (!user) return <AuthPage onAuth={handleAuth} onNavigate={handleNavigate} />
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }} className="app-root">
@@ -168,6 +190,14 @@ export default function App() {
           <Page onNav={handleNavigate} user={user} profile={profile} />
         </main>
       </div>
+
+      <footer style={{ width: '100%', padding: '14px 16px', borderTop: '1px solid var(--border)', background: 'var(--card)', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12, fontSize: 12, color: 'var(--muted)' }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button onClick={() => handleNavigate('privacy')} style={{ background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>Privacy Policy</button>
+          <button onClick={() => handleNavigate('terms')} style={{ background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>Terms of Use</button>
+        </div>
+        <div>© {new Date().getFullYear()} CS Hub. All rights reserved.</div>
+      </footer>
 
       <style>{`
         @media (max-width: 768px) {

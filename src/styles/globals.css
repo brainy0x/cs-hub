@@ -45,6 +45,11 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s ease, color 0.3s ease;
+  min-width: 0;
+}
+
+body, .app-root, .main-content {
+  min-width: 0;
 }
 
 body.dark-mode {
@@ -245,6 +250,8 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 768px) {
   html, body {
     font-size: 13px;
+    overflow-x: hidden;
+    width: 100%;
   }
   
   /* Hide desktop sidebar, show mobile header */
@@ -301,7 +308,8 @@ a { color: inherit; text-decoration: none; }
   }
 
   .week-timeline > div:last-child {
-    min-width: 620px;
+    min-width: auto;
+    width: 100%;
   }
 
   .announcement-banner__bar {
@@ -390,6 +398,7 @@ a { color: inherit; text-decoration: none; }
   /* Prevent horizontal scroll issues */
   * {
     max-width: 100%;
+    box-sizing: border-box;
   }
   
   /* Tab buttons - scroll if needed */
